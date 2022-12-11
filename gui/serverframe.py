@@ -3,7 +3,7 @@ from typing import Optional
 from loguru import logger
 import kex as kx
 import pgnet
-import gui.game
+import gui.gameframe
 import logic.client
 
 
@@ -30,7 +30,8 @@ class ServerFrame(kx.Anchor):
     def make_widgets(self):
         games_list_title = kx.Label(text="[u][b]Games[/b][/u]")
         games_list_title.set_size(y=LINE_WIDGET_HEIGHT)
-        self.games_label = kx.List(items=[""], on_invoked=self._select_game)
+        self.games_label = kx.List(items=[""])
+        self.games_label.bind(on_invoked=self._on_game_invoked)
         refresh_btn = kx.Button(text="Refresh games", on_release=self._refresh_games)
         refresh_btn.set_size(y=LINE_WIDGET_HEIGHT)
         new_game_btn = kx.Button(text="Join/create game", on_release=self._join_game)
@@ -45,7 +46,7 @@ class ServerFrame(kx.Anchor):
         game_frame = kx.Box(orientation="vertical")
         game_frame.add(self.name_input, new_game_btn, disconnect_btn)
         self.lobby_frame = kx.Box()
-        self.lobby_frame.add(list_frame, game_frame)
+        self.lobby_frame.add(game_frame, list_frame)
         self.show_lobby()
 
     def show_lobby(self, *args):
@@ -55,7 +56,7 @@ class ServerFrame(kx.Anchor):
 
     def make_game(self):
         self.main_frame.clear_widgets()
-        game_frame = gui.game.GameFrame(self._client)
+        game_frame = gui.gameframe.GameFrame(self._client)
         self.main_frame.add(game_frame)
 
     def on_game(self, game: str):
@@ -65,10 +66,10 @@ class ServerFrame(kx.Anchor):
         else:
             self.show_lobby()
 
-    def _join_game(self, *args):
+    def _join_game(self, *args, name: Optional[str] = None):
         if not self._client:
             return
-        game_name = self.name_input.text
+        game_name = name or self.name_input.text
         self._client.join_game(game_name)
 
     def _disconnect(self, *args):
@@ -86,15 +87,14 @@ class ServerFrame(kx.Anchor):
         logger.debug(f"New games directory: {games_dir}")
         games = []
         for name, game in sorted(games_dir.items()):
-            p = "(password)" if game.get("password_protected") else "(no passwd)"
-            games.append(f"{game.get('users')} users {p} | {name}")
+            p = "(password)" if game.get("password_protected") else ""
+            games.append(f"{name} | {game.get('users')} users {p}")
         games = games or [""]
         self.games_label.items = games
 
-    def _select_game(self, index: int, label: str):
-        game_name = label.split("| ", 1)[1]
-        logger.debug(f"{game_name=}")
-        self.name_input.text = game_name
+    def _on_game_invoked(self, w, index: int, label: str):
+        game_name = label.rsplit(" |", 1)[0]
+        self._join_game(name=game_name)
 
     @property
     def in_game(self):

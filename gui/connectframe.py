@@ -4,7 +4,7 @@ import pgnet
 import logic.client
 
 
-LINE_HEIGHT = 50
+LINE_HEIGHT = 40
 TITLE_TEXT = "[b][u]Welcome to TicTacToe[/u][/b]"
 INFO_TEXT = (
     "[u]Connecting to a server[/u]"
@@ -21,6 +21,21 @@ INFO_TEXT = (
     "\n\n"
     ""
 )
+
+
+def _wrap_option(entry, text):
+    frame = kx.Box()
+    label = kx.Label(
+        text=text,
+        italic=True,
+        valign="top",
+        halign="right",
+        padding=(10, 5),
+    )
+    label.set_size(x=200)
+    frame.add(label, entry)
+    frame.set_size(y=LINE_HEIGHT)
+    return frame, label
 
 
 class ConnectionFrame(kx.Anchor):
@@ -43,77 +58,56 @@ class ConnectionFrame(kx.Anchor):
         play_button.bind(on_release=self._invoke_play_btn)
         play_button.set_size(x=200, y=75)
         # Connection details
-        online_label = kx.Label(
+        self.online_checkbox = kx.CheckBox(active=True)
+        self.online_checkbox.bind(active=self._toggle_online)
+        online_frame, online_label = _wrap_option(
+            self.online_checkbox,
             text="Multiplayer",
-            halign="right",
-            padding=(10, 5),
         )
-        online_label.set_size(hx=0.01)
-        username_label = kx.Label(
-            text="* Username",
-            italic=True,
-            halign="right",
-            padding=(10, 5),
-        )
-        username_label.set_size(hx=0.01)
-        password_label = kx.Label(
-            text="Password",
-            italic=True,
-            halign="right",
-            padding=(10, 5),
-        )
-        password_label.set_size(hx=0.01)
-        address_label = kx.Label(
-            text="* IP address",
-            italic=True,
-            halign="right",
-            padding=(10, 5),
-        )
-        address_label.set_size(hx=0.01)
-        port_label = kx.Label(
-            text="* Port number",
-            italic=True,
-            halign="right",
-            padding=(10, 5),
-        )
-        port_label.set_size(hx=0.01)
-        verify_label = kx.Label(
-            text="Server verification",
-            italic=True,
-            halign="right",
-            padding=(10, 5),
-        )
-        verify_label.set_size(hx=0.01)
-        self.multiplayer_checkbox = kx.CheckBox(active=True)
-        self.multiplayer_checkbox.bind(active=self._toggle_online)
         self.username_input = kx.Entry(text="guest", select_on_focus=True)
-        self.password_input = kx.Entry(text="", select_on_focus=True, password=True)
-        self.address_input = kx.Entry(text="localhost", select_on_focus=True)
-        self.port_input = kx.Entry(text=str(pgnet.DEFAULT_PORT), select_on_focus=True)
-        self.verify_input = kx.Entry(select_on_focus=True)
-        options_grid = kx.Grid(
-            cols=2,
-            row_default_height=LINE_HEIGHT,
-            row_force_default=True,
-            cols_minimum={0: 150},
-        )
-        options_grid.add(
-            online_label,
-            self.multiplayer_checkbox,
-            username_label,
+        username_frame, username_label = _wrap_option(
             self.username_input,
-            password_label,
+            text="* Username"
+        )
+        self.password_input = kx.Entry(text="", select_on_focus=True, password=True)
+        password_frame, password_label = _wrap_option(
             self.password_input,
-            address_label,
+            text="Password"
+        )
+        self.address_input = kx.Entry(text="localhost", select_on_focus=True)
+        address_frame, address_label = _wrap_option(
             self.address_input,
-            port_label,
+            text="* IP address"
+        )
+        self.port_input = kx.Entry(text=str(pgnet.DEFAULT_PORT), select_on_focus=True)
+        port_frame, port_label = _wrap_option(
             self.port_input,
-            verify_label,
+            text="* Port number"
+        )
+        self.verify_input = kx.Entry(select_on_focus=True)
+        verify_frame, verify_label = _wrap_option(
             self.verify_input,
+            text="Server verification"
+        )
+        advanced_label = kx.Label(
+            text="Advanced options",
+            color=(0.7, 0.7, 0.7),
+            italic=True,
+        )
+        advanced_label.set_size(y=LINE_HEIGHT)
+        options_grid = kx.Box(orientation="vertical")
+        options_grid.add(
+            online_frame,
+            username_frame,
+            password_frame,
+            address_frame,
+            advanced_label,
+            port_frame,
+            verify_frame,
         )
         # Assemble
         grid_height = LINE_HEIGHT * (len(options_grid.children) // 2 + 1)
-        options_grid.set_size(y=grid_height)
+        options_grid.set_size(hx=0.8, y=grid_height)
         options_frame = kx.Anchor()
         options_frame.add(options_grid)
         play_frame = kx.Anchor()
@@ -122,10 +116,11 @@ class ConnectionFrame(kx.Anchor):
         panel_frame = kx.Box(orientation="vertical")
         panel_frame.set_size(x=350)
         panel_frame.add(title_label, info_label, play_frame)
+        panel_frame.make_bg(kx.get_color("cyan", v=0.3))
         main_frame = kx.Box()
         main_frame.set_size(x=900, y=700)
         main_frame.add(options_frame, panel_frame)
-        main_frame.make_bg(kx.get_color("orange", v=0.3))
+        main_frame.make_bg(kx.get_color("pink", v=0.3))
         self.add(main_frame)
         self.online_options_widgets = (
             password_label,
@@ -138,7 +133,7 @@ class ConnectionFrame(kx.Anchor):
             self.verify_input,
         )
         for w in self.online_options_widgets:
-            w.disabled = not self.multiplayer_checkbox.active
+            w.disabled = not self.online_checkbox.active
         self.username_input.focus = True
         self.app.connection_im.register(
             "Start game",
@@ -147,7 +142,7 @@ class ConnectionFrame(kx.Anchor):
         )
         self.app.connection_im.register(
             "Toggle multiplayer",
-            self._toggle_multiplayer,
+            self._toggle_online_checkbox,
             "^ m",
         )
 
@@ -158,7 +153,7 @@ class ConnectionFrame(kx.Anchor):
 
     def _invoke_play_btn(self, *args):
         username = self.username_input.text or None
-        online = self.multiplayer_checkbox.active
+        online = self.online_checkbox.active
         if online:
             port = self.port_input.text
             verify_pubkey = self.verify_input.text or None
@@ -179,5 +174,5 @@ class ConnectionFrame(kx.Anchor):
             client = logic.client.LocalhostClient(username)
         self.app.set_client(client)
 
-    def _toggle_multiplayer(self, *a):
-        self.multiplayer_checkbox.toggle()
+    def _toggle_online_checkbox(self, *a):
+        self.online_checkbox.toggle()

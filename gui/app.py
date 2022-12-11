@@ -4,8 +4,8 @@ from loguru import logger
 import asyncio
 import functools
 import kex as kx
-import gui.connect
-import gui.server
+import gui.connectframe
+import gui.serverframe
 import logic.client
 
 
@@ -52,8 +52,8 @@ class App(kx.App):
     def make_widgets(self):
         self.root.clear_widgets()
         self.root.make_bg(kx.get_color("purple", v=0.05))
-        self.connection_frame = gui.connect.ConnectionFrame()
-        self.server_frame = gui.server.ServerFrame()
+        self.connection_frame = gui.connectframe.ConnectionFrame()
+        self.server_frame = gui.serverframe.ServerFrame()
         self.main_frame = kx.Anchor()
         self.status_bar = kx.Label(
             halign="left",
