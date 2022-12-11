@@ -35,6 +35,7 @@ class App(kx.App):
         self.title = "Multiplayer prototype"
         self.make_ims()
         self.make_widgets()
+        self.hook(self.update, 20)
         self.set_feedback("Welcome")
 
     def make_ims(self):
@@ -77,6 +78,9 @@ class App(kx.App):
         self.main_frame.add(self.server_frame)
         self.server_frame.set_client(client)
         self.im_group.switch("server")
+
+    def update(self, *args):
+        self.server_frame.update()
 
     def set_feedback(
         self,

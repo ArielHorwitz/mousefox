@@ -2,18 +2,21 @@
 from typing import Optional
 from loguru import logger
 import kex as kx
+import arrow
 import pgnet
 import gui.gameframe
 import logic.client
 
 
 LINE_WIDGET_HEIGHT = 45
+AUTO_REFRESH_INTERVAL = 5
 
 
 class ServerFrame(kx.Anchor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._client: Optional[logic.client.Client] = None
+        self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.make_bg(kx.get_color("pink", v=0.3))
         self.main_frame = kx.Anchor()
         self.add(self.main_frame)
@@ -59,6 +62,13 @@ class ServerFrame(kx.Anchor):
         game_frame = gui.gameframe.GameFrame(self._client)
         self.main_frame.add(game_frame)
 
+    def update(self):
+        if not self._client or not self._client.connected:
+            return
+        if arrow.now() > self._next_dir_refresh:
+            self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
+            self._refresh_games()
+
     def on_game(self, game: str):
         logger.info(f"New game: {game}")
         if game:
@@ -84,7 +94,6 @@ class ServerFrame(kx.Anchor):
 
     def _on_games_dir_response(self, games_dir_response: pgnet.Response):
         games_dir = games_dir_response.payload.get("games")
-        logger.debug(f"New games directory: {games_dir}")
         games = []
         for name, game in sorted(games_dir.items()):
             p = "(password)" if game.get("password_protected") else ""
