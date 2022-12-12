@@ -119,7 +119,7 @@ class ConnectionFrame(kx.Anchor):
         panel_frame.make_bg(kx.get_color("cyan", v=0.3))
         main_frame = kx.Box()
         main_frame.set_size(x=900, y=700)
-        main_frame.add(options_frame, panel_frame)
+        main_frame.add(panel_frame, options_frame)
         main_frame.make_bg(kx.get_color("pink", v=0.3))
         self.add(main_frame)
         self.online_options_widgets = (
