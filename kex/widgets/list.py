@@ -21,6 +21,7 @@ class XList(kv.FocusBehavior, XRelative):
     font_name = kv.StringProperty("Roboto")
     font_size = kv.NumericProperty(16)
     item_height = kv.NumericProperty(35)
+    item_padding = kv.ListProperty([10, 5])
     items = kv.ListProperty()
     selection = kv.NumericProperty(0)
     paging_size = kv.NumericProperty(None)
@@ -51,6 +52,7 @@ class XList(kv.FocusBehavior, XRelative):
             pos=self._on_geometry,
             selection=self._on_selection,
             item_height=self._refresh_label_kwargs,
+            item_padding=self._refresh_label_kwargs,
             font_name=self._refresh_label_kwargs,
             font_size=self._refresh_label_kwargs,
             shorten=self._refresh_label_kwargs,
@@ -198,6 +200,7 @@ class XList(kv.FocusBehavior, XRelative):
             font_name=self.font_name,
             font_size=self.font_size,
             text_size=(self.width, self.item_height),
+            padding=self.item_padding,
             shorten=self.shorten,
             shorten_from=self.shorten_from,
             valign="middle",
