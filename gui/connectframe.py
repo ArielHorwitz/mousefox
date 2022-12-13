@@ -1,7 +1,9 @@
 
+from dataclasses import dataclass
 import kex as kx
 import pgnet
 import logic.client
+import util
 
 
 LINE_HEIGHT = 40
@@ -38,6 +40,34 @@ def _wrap_option(entry, text):
     return frame, label
 
 
+CONFIG_FILE = util.get_appdata_dir() / "pgnetgui_config.txt"
+
+
+@dataclass
+class _ConnectionConfig:
+    online: bool = True
+    username: str = "guest"
+    address: str = "localhost"
+    port: int = 38929
+    pubkey: str = ""
+
+    @classmethod
+    def load_from_disk(cls) -> "_ConnectionConfig":
+        try:
+            with open(CONFIG_FILE) as f:
+                data = f.read()
+            online, user, addr, port, pubkey = data.splitlines()
+            return cls(bool(online), user, addr, int(port), pubkey)
+        except Exception:
+            return cls()
+
+    def save_to_disk(self):
+        data = [int(self.online), self.username, self.address, self.port, self.pubkey]
+        with open(CONFIG_FILE, "w") as f:
+            f.write("\n".join(str(d) for d in data))
+            f.write("\n")
+
+
 class ConnectionFrame(kx.Anchor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -45,6 +75,7 @@ class ConnectionFrame(kx.Anchor):
 
     def make_widgets(self):
         self.clear_widgets()
+        config = _ConnectionConfig.load_from_disk()
         # Side panel
         title_label = kx.Label(text=TITLE_TEXT)
         title_label.set_size(y=LINE_HEIGHT * 2)
@@ -58,13 +89,13 @@ class ConnectionFrame(kx.Anchor):
         play_button.bind(on_release=self._invoke_play_btn)
         play_button.set_size(x=200, y=75)
         # Connection details
-        self.online_checkbox = kx.CheckBox(active=True)
+        self.online_checkbox = kx.CheckBox(active=config.online)
         self.online_checkbox.bind(active=self._toggle_online)
         online_frame, online_label = _wrap_option(
             self.online_checkbox,
             text="Multiplayer",
         )
-        self.username_input = kx.Entry(text="guest", select_on_focus=True)
+        self.username_input = kx.Entry(text=config.username, select_on_focus=True)
         username_frame, username_label = _wrap_option(
             self.username_input,
             text="* Username"
@@ -74,17 +105,17 @@ class ConnectionFrame(kx.Anchor):
             self.password_input,
             text="Password"
         )
-        self.address_input = kx.Entry(text="localhost", select_on_focus=True)
+        self.address_input = kx.Entry(text=config.address, select_on_focus=True)
         address_frame, address_label = _wrap_option(
             self.address_input,
             text="* IP address"
         )
-        self.port_input = kx.Entry(text=str(pgnet.DEFAULT_PORT), select_on_focus=True)
+        self.port_input = kx.Entry(text=str(config.port), select_on_focus=True)
         port_frame, port_label = _wrap_option(
             self.port_input,
             text="* Port number"
         )
-        self.verify_input = kx.Entry(select_on_focus=True)
+        self.verify_input = kx.Entry(text=config.pubkey, select_on_focus=True)
         verify_frame, verify_label = _wrap_option(
             self.verify_input,
             text="Server verification"
@@ -152,27 +183,30 @@ class ConnectionFrame(kx.Anchor):
         self.username_input.focus = True
 
     def _invoke_play_btn(self, *args):
-        username = self.username_input.text or None
         online = self.online_checkbox.active
+        username = self.username_input.text or None
+        address = self.address_input.text
+        port = self.port_input.text
+        pubkey = self.verify_input.text
+        try:
+            port = int(port)
+            assert 0 < port < 2**16
+        except (ValueError, AssertionError):
+            self.app.set_feedback_warning("Port number must be a positive integer.")
+            return
         if online:
-            port = self.port_input.text
-            verify_pubkey = self.verify_input.text or None
-            try:
-                port = int(port)
-                assert 0 < port < 2**16
-            except (ValueError, AssertionError):
-                self.app.set_feedback_warning("Port number must be a positive integer.")
-                return
             client = logic.client.Client(
-                address=self.address_input.text,
+                address=address,
                 port=port,
                 username=username,
                 password=self.password_input.text,
-                verify_server_pubkey=verify_pubkey,
+                verify_server_pubkey=pubkey or None,
             )
         else:
             client = logic.client.LocalhostClient(username)
         self.app.set_client(client)
+        config = _ConnectionConfig(online, username, address, port, pubkey)
+        config.save_to_disk()
 
     def _toggle_online_checkbox(self, *a):
         self.online_checkbox.toggle()
