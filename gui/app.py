@@ -32,7 +32,7 @@ class App(kx.App):
                 kx.Window.set_size(*size)
             if offset:
                 kx.schedule_once(lambda *a: kx.Window.set_position(*offset))
-        self.title = "Multiplayer prototype"
+        self.title = "KPdemo"
         self.make_ims()
         self.make_widgets()
         self.hook(self.update, 20)

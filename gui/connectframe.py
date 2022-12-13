@@ -7,8 +7,11 @@ import util
 
 
 LINE_HEIGHT = 40
-TITLE_TEXT = "[b][u]Welcome to TicTacToe[/u][/b]"
+TITLE_TEXT = "[b][u]Welcome to KPdemo[/u][/b]"
 INFO_TEXT = (
+    "This online multiplayer game of tic-tac-toe is a demo for the Kex and"
+    " PGNet Python libraries."
+    "\n\n"
     "[u]Connecting to a server[/u]"
     "\n\n"
     "To register, simply choose a username and password and log in (if the"
@@ -40,7 +43,7 @@ def _wrap_option(entry, text):
     return frame, label
 
 
-CONFIG_FILE = util.get_appdata_dir() / "pgnetgui_config.txt"
+CONFIG_FILE = util.get_appdata_dir() / "connection_config.txt"
 
 
 @dataclass

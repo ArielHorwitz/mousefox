@@ -1,8 +1,8 @@
-"""Multiplayer game.
+"""KPdemo
 
-Usage: multiplayer [-h | --help] [options]
-       multiplayer server [--p <password>] [options]
-       multiplayer dev [options]
+Usage: kpdemo [-h | --help] [options]
+       kpdemo server [--p <password>] [options]
+       kpdemo dev [options]
 
 Options:
   -h, --help                  Show this help and quit

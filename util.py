@@ -7,9 +7,9 @@ import platform
 def get_appdata_dir() -> Path:
     """Return path to the user's app data folder.
 
-    - Windows: `~\\AppData\\Local`
-    - Mac OS: `~/Library/Local`
-    - Linux: `~/.local/share`
+    - Windows: `~\\AppData\\Local\\kpdemo`
+    - Mac OS: `~/Library/Local/kpdemo`
+    - Linux: `~/.local/share/kpdemo`
     """
     if platform.system() == "Windows":
         parts = ["AppData", "Local"]
@@ -17,9 +17,9 @@ def get_appdata_dir() -> Path:
         parts = ["Library"]
     else:
         parts = [".local", "share"]
-    path = Path.home().joinpath(*parts)
+    path = Path.home().joinpath(*parts) / "kpdemo"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
-SERVER_SAVE_FILE = get_appdata_dir() / "pgnet-server-data.json"
+SERVER_SAVE_FILE = get_appdata_dir() / "server-data.json"
