@@ -56,11 +56,7 @@ class App(kx.App):
         self.connection_frame = gui.connectframe.ConnectionFrame()
         self.server_frame = gui.serverframe.ServerFrame()
         self.main_frame = kx.Anchor()
-        self.status_bar = kx.Label(
-            halign="left",
-            italic=True,
-            padding=(10, 0),
-        )
+        self.status_bar = kx.Label(halign="left", italic=True, padding=(10, 0))
         self.status_bar.set_size(y=40)
         self.status_bar.make_bg(kx.get_color("purple", v=0.2))
         root_frame = kx.Box(orientation="vertical")
@@ -73,7 +69,7 @@ class App(kx.App):
         self.main_frame.add(self.connection_frame)
         self.im_group.switch("connect")
 
-    def make_server_screen(self, client):
+    def show_server_screen(self, client):
         self.main_frame.clear_widgets()
         self.main_frame.add(self.server_frame)
         self.server_frame.set_client(client)
@@ -104,7 +100,7 @@ class App(kx.App):
         self._client = client
         client.on_status = functools.partial(self._on_client_status, client)
         self.app.set_feedback(client.status)
-        self.make_server_screen(client)
+        self.show_server_screen(client)
         await client.async_connect()
 
     def _on_client_status(self, client, status):
