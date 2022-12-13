@@ -1,29 +1,48 @@
 """Game logic."""
 
+from typing import Optional
+import json
 from pgnet import BaseGame, Packet, Response, STATUS_UNEXPECTED
 
 
+def get_blank_save_string() -> dict:
+    return json.dumps(dict(
+        board=[""] * 9,
+        players=[],
+        x_turn=True,
+    ))
+
+
 class Game(BaseGame):
-    def __init__(self, *args, **kwargs):
+
+    persistent = True
+
+    def __init__(self, *args, save_string: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.board = [None] * 9
-        self.players: list[str] = []
-        self.x_turn: bool = True
-        self.started: bool = False
-        self._last_state: str = ""
+        save_string = save_string or get_blank_save_string()
+        data = json.loads(save_string)
+        self.board: list[str] = data["board"]
+        self.players: list[str] = data["players"]
+        self.x_turn: bool = data["x_turn"]
         self.commands = dict(
             get_state_hash=self.get_state_hash,
             get_full_data=self.get_full_data,
             play_square=self.play_square,
         )
 
-    def add_user(self, player: str):
+    def get_save_string(self) -> str:
+        data = dict(
+            board=self.board,
+            players=self.players,
+            x_turn=self.x_turn,
+        )
+        return json.dumps(data)
+
+    def user_joined(self, player: str):
         if player not in self.players:
             self.players.append(player)
-        if len(self.players) == 2:
-            self.started = True
 
-    def remove_user(self, player: str):
+    def user_left(self, player: str):
         if player in self.players[2:]:
             self.players.remove(player)
 
@@ -37,15 +56,15 @@ class Game(BaseGame):
     @property
     def state_hash(self) -> str:
         data = [
-            str(self._last_state),
-            str(self.players),
             str(self.board),
+            str(self.players),
+            str(self.x_turn),
         ]
         final = hash(tuple(data))
         return final
 
     def _get_turn_username(self) -> str:
-        if not self.started:
+        if len(self.players) < 2:
             return ""
         return self.players[int(self.x_turn)]
 
@@ -69,7 +88,7 @@ class Game(BaseGame):
         if packet.username != user:
             return Response("Not your turn.", status=STATUS_UNEXPECTED)
         square = int(packet.payload["square"])
-        if self.board[square] is not None:
+        if self.board[square]:
             return Response("Square is already marked.", status=STATUS_UNEXPECTED)
         mark = "X" if self.x_turn else "O"
         self.board[square] = mark
