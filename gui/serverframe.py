@@ -34,6 +34,7 @@ class ServerFrame(kx.Anchor):
         self.main_frame = kx.Anchor()
         self.add(self.main_frame)
         self.make_widgets()
+        self.app.server_im.register("server.disconnect", self._disconnect, "^+ c")
 
     def set_client(self, client: Optional[logic.client.Client]):
         if self._client:
@@ -172,6 +173,7 @@ class ServerFrame(kx.Anchor):
         if not self._client:
             return
         self._client.close()
+        self.show_lobby()
         self.app.show_connection_screen()
 
     def _refresh_games(self, *args):
