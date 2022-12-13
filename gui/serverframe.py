@@ -60,7 +60,7 @@ class ServerFrame(kx.Anchor):
             items=[""],
             bg_color=(0, 0, 0, 0.3),
             fg_color=(1, 1, 1, 0.75),
-            item_height=LINE_WIDGET_HEIGHT + 20,
+            item_height=LINE_WIDGET_HEIGHT,
         )
         self.games_list.bind(
             on_invoked=self._on_game_invoked,

@@ -18,7 +18,7 @@ class GameFrame(kx.FocusBehavior, kx.Anchor):
         self.client.check_update()
 
     def make_widgets(self):
-        self.info_panel = kx.Label(halign="left", valign="top")
+        self.info_panel = kx.Label(halign="left", valign="top", padding=(10, 5))
         self.info_panel.make_bg(kx.get_color("cyan", v=0.2))
         leave_btn = kx.Button(text="Leave game", on_release=self._leave_game)
         leave_btn.set_size(y=LINE_WIDGET_HEIGHT)
