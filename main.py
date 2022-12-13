@@ -18,6 +18,7 @@ Server Options:
                               Must be set to host globally, localhost
                                   only if no password
   --port <port>               Listen on port number
+  --delete-saved-data         Delete the server data from disk
 
 Dev Options:
   -r, --remote                Connect to a remote server
@@ -30,6 +31,7 @@ import asyncio
 import docopt
 import pgnet
 import pgnet.devclient
+import util
 from loguru import logger
 
 
@@ -37,6 +39,8 @@ async def main():
     """Main script entry point. See module documentation for details."""
     args: dict = docopt.docopt()
     logger.info("Welcome.")
+    if args.delete_saved_data:
+        _delete_server_file()
     # Resolve task to run
     if args.dev:
         main_coro = _get_devclient_coro(args)
@@ -81,25 +85,32 @@ async def _close_remaining_tasks(debug: bool = True):
             continue
 
 
+def _delete_server_file():
+    save_file = util.SERVER_SAVE_FILE
+    if save_file.is_file():
+        save_file.unlink()
+
+
 def _get_devclient_coro(args):
     import logic.game
 
     return pgnet.devclient.async_run(
         remote=args.remote,
         game=logic.game.Game,
+        server_kwargs=dict(save_file=util.SERVER_SAVE_FILE),
     )
 
 
 def _get_server_coro(args):
     import logic.game
 
-    kw = dict()
+    kw = dict(save_file=util.SERVER_SAVE_FILE)
     if args.port:
         kw["port"] = int(args.port)
     if args.admin_password:
         kw["address"] = ""  # Listen globally
         kw["admin_password"] = args.admin_password
-    server = pgnet.server.BaseServer(logic.game.Game, **kw)
+    server = pgnet.BaseServer(logic.game.Game, **kw)
     return server.async_run()
 
 

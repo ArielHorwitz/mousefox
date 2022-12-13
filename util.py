@@ -20,3 +20,6 @@ def get_appdata_dir() -> Path:
     path = Path.home().joinpath(*parts)
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+SERVER_SAVE_FILE = get_appdata_dir() / "pgnet-server-data.json"
