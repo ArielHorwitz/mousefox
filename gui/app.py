@@ -70,6 +70,7 @@ class App(kx.App):
         self.im_group.switch("connect")
 
     def show_server_screen(self, client):
+        client.on_connection = None
         self.main_frame.clear_widgets()
         self.main_frame.add(self.server_frame)
         self.server_frame.set_client(client)
@@ -100,7 +101,7 @@ class App(kx.App):
         self._client = client
         client.on_status = functools.partial(self._on_client_status, client)
         self.app.set_feedback(client.status)
-        self.show_server_screen(client)
+        client.on_connection = lambda *args: self.show_server_screen(client)
         await client.async_connect()
 
     def _on_client_status(self, client, status):
