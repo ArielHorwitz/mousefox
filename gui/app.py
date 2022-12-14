@@ -23,15 +23,15 @@ class App(kx.App):
         super().__init__()
         self._client: Optional[logic.client.Client] = None
         if borderless:
-            kx.Window.toggle_borderless(True)
+            self.toggle_borderless(True)
         if maximize:
-            kx.Window.maximize()
+            self.maximize()
         else:
             if size:
                 size = tuple(max(c) for c in zip(MINIMUM_SIZE, size))
-                kx.Window.set_size(*size)
+                self.set_size(*size)
             if offset:
-                kx.schedule_once(lambda *a: kx.Window.set_position(*offset))
+                kx.schedule_once(lambda *a: self.set_position(*offset))
         self.title = "KPdemo"
         self.make_ims()
         self.make_widgets()
@@ -100,7 +100,7 @@ class App(kx.App):
             self._client.close()
         self._client = client
         client.on_status = functools.partial(self._on_client_status, client)
-        self.app.set_feedback(client.status)
+        self.set_feedback(client.status)
         client.on_connection = lambda *args: self.show_server_screen(client)
         await client.async_connect()
 
