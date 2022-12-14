@@ -17,20 +17,13 @@ WINNING_LINES = [
 ]
 
 
-def get_blank_save_string() -> dict:
-    return json.dumps(dict(
-        board=[""] * 9,
-        players=[],
-        x_turn=True,
-    ))
+BLANK_SAVE_STRING = json.dumps(dict(board=[""] * 9, players=[], x_turn=True))
 
 
 class Game(BaseGame):
-
     def __init__(self, *args, save_string: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
-        save_string = save_string or get_blank_save_string()
-        data = json.loads(save_string)
+        data = json.loads(save_string or BLANK_SAVE_STRING)
         self.board: list[str] = data["board"]
         self.players: list[str] = data["players"]
         self.x_turn: bool = data["x_turn"]
