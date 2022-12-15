@@ -34,7 +34,10 @@ class ServerFrame(kx.Anchor):
         self.main_frame = kx.Anchor()
         self.add(self.main_frame)
         self.make_widgets()
-        self.app.server_im.register("server.disconnect", self._disconnect, "^+ c")
+        self.app.controller.bind("server.disconnect", self._disconnect)
+        self.app.controller.bind("server.lobby.disconnect", self._disconnect)
+        self.app.controller.bind("server.lobby.focus_create", self._focus_create)
+        self.app.controller.bind("server.lobby.focus_list", self._focus_list)
 
     def set_client(self, client: Optional[logic.client.Client]):
         if self._client:
@@ -117,12 +120,13 @@ class ServerFrame(kx.Anchor):
         self.main_frame.add(self.lobby_frame)
         self._refresh_games()
         self._show_game()
-        kx.schedule_once(self.games_list.set_focus, 0.1)  # Dirty hotfix
+        self.app.controller.set("server.lobby")
 
     def make_game(self):
         self.main_frame.clear_widgets()
         game_frame = gui.gameframe.GameFrame(self._client)
         self.main_frame.add(game_frame)
+        self.app.controller.set("server.game")
 
     def update(self):
         if not self._client or not self._client.connected:
@@ -188,6 +192,12 @@ class ServerFrame(kx.Anchor):
 
     def _on_game_invoked(self, w, index: int, label: str):
         self._join_game(name=label)
+
+    def _focus_create(self):
+        self.create_name_input.focus = True
+
+    def _focus_list(self):
+        self.games_list.focus = True
 
     @property
     def in_game(self):

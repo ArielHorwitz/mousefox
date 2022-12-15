@@ -3,13 +3,26 @@ from typing import Optional
 from loguru import logger
 import asyncio
 import functools
+import pathlib
 import kex as kx
 import gui.connectframe
 import gui.serverframe
 import logic.client
+import util
 
 
+HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
 MINIMUM_SIZE = (1024, 768)
+
+
+def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
+    new_dict = dict()
+    for k, v in nested.items():
+        if isinstance(v, dict):
+            new_dict |= _flatten_hotkey_paths(v, f"{prefix}{k}.")
+        else:
+            new_dict[f"{prefix}{k}"] = v
+    return new_dict
 
 
 class App(kx.App):
@@ -33,22 +46,28 @@ class App(kx.App):
             if offset:
                 kx.schedule_once(lambda *a: self.set_position(*offset))
         self.title = "KPdemo"
-        self.make_ims()
+        self.controller = kx.HotkeyController(
+            logger=logger.debug,
+            log_register=True,
+            log_bind=True,
+            log_callback=True,
+        )
+        self._register_controller(self.controller)
         self.make_widgets()
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
 
-    def make_ims(self):
-        self.im = kx.InputManager("App")
-        self.im.register("app.quit", self.stop, "^+ q")
-        self.im.register("app.restart", self.restart, "^+ w")
-        self.connection_im = kx.InputManager("Connection frame", active=False)
-        self.server_im = kx.InputManager("Server frame", active=False)
-        group = {
-            "connect": [self.connection_im],
-            "server": [self.server_im],
-        }
-        self.im_group = kx.InputManagerGroup(group, always_active=[self.im])
+    def _register_controller(self, controller: kx.HotkeyController):
+        loaded_dict = util.toml_load(HOTKEYS_FILE)
+        hotkeys = _flatten_hotkey_paths(loaded_dict)
+        for control, hotkeys in hotkeys.items():
+            if not isinstance(hotkeys, list):
+                hotkeys = [hotkeys]
+            for hk in hotkeys:
+                controller.register(control, hk)
+        controller.bind("quit", self.stop)
+        controller.bind("restart", self.restart)
+        controller.bind("debug", controller.debug)
 
     def make_widgets(self):
         self.root.clear_widgets()
@@ -67,14 +86,14 @@ class App(kx.App):
     def show_connection_screen(self):
         self.main_frame.clear_widgets()
         self.main_frame.add(self.connection_frame)
-        self.im_group.switch("connect")
+        self.controller.set("connection")
 
     def show_server_screen(self, client):
         client.on_connection = None
         self.main_frame.clear_widgets()
         self.main_frame.add(self.server_frame)
         self.server_frame.set_client(client)
-        self.im_group.switch("server")
+        self.controller.set("server.lobby")
 
     def update(self, *args):
         self.server_frame.update()

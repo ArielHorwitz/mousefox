@@ -1,5 +1,6 @@
 Kivy==2.1.0
 docopt-ng==0.8.1
 loguru==0.6.0
+tomli==2.0.1
 git+ssh://git@github.com/ArielHorwitz/pgnet.git
 git+ssh://git@github.com/ArielHorwitz/kex.git

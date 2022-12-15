@@ -7,7 +7,7 @@ import logic.client
 LINE_WIDGET_HEIGHT = 45
 
 
-class GameFrame(kx.FocusBehavior, kx.Anchor):
+class GameFrame(kx.Anchor):
     def __init__(self, client: logic.client.Client, **kwargs):
         super().__init__(**kwargs)
         self.client = client
@@ -16,6 +16,7 @@ class GameFrame(kx.FocusBehavior, kx.Anchor):
         self.client.on_game_state = self._on_game_state
         self._on_game_state(self.client.game_state)
         self.client.check_update()
+        self.app.controller.bind("server.game.leave", self.client.leave_game)
 
     def make_widgets(self):
         self.info_panel = kx.Label(halign="left", valign="top", padding=(10, 5))
@@ -38,7 +39,6 @@ class GameFrame(kx.FocusBehavior, kx.Anchor):
         main_frame.add(panel_frame, board_frame)
         self.clear_widgets()
         self.add(main_frame)
-        self.focus = True
 
     def _on_game_state(self, state):
         players = state.get("players", [])[:2]
@@ -63,13 +63,3 @@ class GameFrame(kx.FocusBehavior, kx.Anchor):
 
     def _leave_game(self, *args):
         self.client.leave_game()
-
-    def keyboard_on_key_down(self, w, key_pair, text, mods):
-        keycode, key = key_pair
-        if key == "escape":
-            self.client.leave_game()
-
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self.focus = True
-        return super().on_touch_down(touch)

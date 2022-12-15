@@ -75,6 +75,11 @@ class ConnectionFrame(kx.Anchor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.make_widgets()
+        self.app.controller.bind("connection.start", self._invoke_play_btn)
+        self.app.controller.bind(
+            "connection.toggle_multiplayer",
+            self._toggle_online_checkbox,
+        )
 
     def make_widgets(self):
         self.clear_widgets()
@@ -169,16 +174,6 @@ class ConnectionFrame(kx.Anchor):
         for w in self.online_options_widgets:
             w.disabled = not self.online_checkbox.active
         self.username_input.focus = True
-        self.app.connection_im.register(
-            "Start game",
-            self._invoke_play_btn,
-            ["enter", "numpadenter", "spacebar"],
-        )
-        self.app.connection_im.register(
-            "Toggle multiplayer",
-            self._toggle_online_checkbox,
-            "^ m",
-        )
 
     def _toggle_online(self, w, value):
         for w in self.online_options_widgets:

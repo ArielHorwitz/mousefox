@@ -1,0 +1,19 @@
+
+quit = "^+ q"
+restart = "^+ w"
+debug = "^+ d"
+
+[connection]
+start = ["enter", "numpadenter"]
+toggle_multiplayer = "^ m"
+
+[server]
+disconnect = "^+ delete"
+
+[server.lobby]
+disconnect = "escape"
+focus_create = "^ c"
+focus_list = "^ l"
+
+[server.game]
+leave = "escape"
