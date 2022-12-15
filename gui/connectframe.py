@@ -206,7 +206,7 @@ class ConnectionFrame(kx.Anchor):
                 verify_server_pubkey=pubkey or None,
             )
         else:
-            client = logic.client.LocalhostClient(username)
+            client = logic.client.LocalhostClient(username=username)
         self.app.set_client(client)
         config = _ConnectionConfig(online, username, address, port, pubkey)
         config.save_to_disk()
