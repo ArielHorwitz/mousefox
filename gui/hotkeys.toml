@@ -5,15 +5,14 @@ debug = "^+ d"
 
 [connection]
 start = ["enter", "numpadenter"]
-toggle_multiplayer = "^ m"
 
 [server]
 disconnect = "^+ delete"
 
 [server.lobby]
 disconnect = "escape"
-focus_create = "^ c"
-focus_list = "^ l"
+focus_create = "^ n"
+focus_list = "^ j"
 
 [server.game]
 leave = "escape"

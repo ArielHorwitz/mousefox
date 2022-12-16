@@ -12,27 +12,15 @@ LINE_WIDGET_HEIGHT = 40
 AUTO_REFRESH_INTERVAL = 5
 
 
-def _get_entry_frame(widget, text):
-    label = kx.Label(text=text, halign="right", padding=(10, 5))
-    label.set_size(x=100)
-    box = kx.Box()
-    box.set_size(x=300)
-    box.add(label, widget)
-    frame = kx.Anchor()
-    frame.set_size(y=LINE_WIDGET_HEIGHT)
-    frame.add(box)
-    return frame
-
-
-class ServerFrame(kx.Anchor):
+class ServerFrame(kx.XAnchor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._client: Optional[logic.client.Client] = None
         self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.games_dir = dict()
         self.make_bg(kx.get_color("orange", v=0.3))
-        self.main_frame = kx.Anchor()
-        self.add(self.main_frame)
+        self.main_frame = kx.XAnchor()
+        self.add_widget(self.main_frame)
         self.make_widgets()
         self.app.controller.bind("server.disconnect", self._disconnect)
         self.app.controller.bind("server.lobby.disconnect", self._disconnect)
@@ -48,76 +36,76 @@ class ServerFrame(kx.Anchor):
 
     def make_widgets(self):
         # Title
-        title = kx.Label(text="[b]Server lobby[/b]", font_size=18)
-        # title.set_size(y=LINE_WIDGET_HEIGHT)
-        disconnect_btn = kx.Button(text="Disconnect", on_release=self._disconnect)
-        # disconnect_btn.set_size()
-        refresh_btn = kx.Button(text="Refresh", on_release=self._refresh_games)
-        # refresh_btn.set_size()
-        title_frame = kx.Box()
+        title = kx.XLabel(text="[b]Server lobby[/b]", font_size=18)
+        disconnect_btn = kx.XButton(text="Disconnect", on_release=self._disconnect)
+        refresh_btn = kx.XButton(text="Refresh", on_release=self._refresh_games)
+        title_frame = kx.XBox()
         title_frame.set_size(y=LINE_WIDGET_HEIGHT)
-        title_frame.add(disconnect_btn, title, refresh_btn)
+        title_frame.add_widgets(disconnect_btn, title, refresh_btn)
 
-        # Join game
-        self.games_list = kx.List(
+        # Games list
+        self.games_list = kx.XList(
             items=[""],
-            bg_color=(0, 0, 0, 0.3),
-            fg_color=(1, 1, 1, 0.75),
+            selection_color=(1, 1, 1),
             item_height=LINE_WIDGET_HEIGHT,
         )
         self.games_list.bind(
-            on_invoked=self._on_game_invoked,
+            on_invoke=self._on_game_invoke,
             selection=self._show_game,
         )
-        self.join_password_input = kx.Entry(password=True)
-        self.join_password_input.bind(on_text_validate=self._join_game)
-        password_input = _get_entry_frame(self.join_password_input, "Password:")
-        join_game_btn = kx.Button(text="Join game", on_release=self._join_game)
-        join_game_btn.set_size(hx=0.5)
-        join_frame = kx.Box()
-        join_frame.set_size(y=LINE_WIDGET_HEIGHT)
-        join_frame.add(password_input, join_game_btn)
-        join_panel = kx.Box(orientation="vertical")
-        join_panel.add(title_frame, self.games_list, join_frame)
+        list_frame = kx.XBox(orientation="vertical")
+        list_frame.add_widgets(title_frame, self.games_list)
 
         # Game info
-        self.game_info_label = kx.Label(halign="left", valign="top", padding=(10, 5))
-        self.game_info_label.make_bg(kx.XColor(v=0, a=0.1))
-        info_title = kx.Label(text="[b]Game Details[/b]")
+        info_title = kx.XLabel(text="[b]Game Details[/b]")
         info_title.set_size(y=LINE_WIDGET_HEIGHT)
-        info_panel = kx.Box(orientation="vertical")
-        info_panel.add(info_title, self.game_info_label)
+        self.game_info_label = kx.XLabel(halign="left", valign="top", padding=(10, 5))
+        join_iwidgets = dict(password=kx.XInputPanelWidget("Password", "password"))
+        self.join_panel = kx.XInputPanel(
+            join_iwidgets,
+            reset_text="",
+            invoke_text="Join",
+        )
+        self.join_panel.bind(on_invoke=self._join_game)
+        join_frame = kx.XAnchor.wrap(self.join_panel, x=0.8)
+        join_frame.set_size(y=LINE_WIDGET_HEIGHT * 2)
+        info_panel = kx.XBox(orientation="vertical")
+        info_panel.add_widgets(
+            info_title,
+            self.game_info_label,
+            join_frame,
+        )
         info_panel.make_bg(kx.get_color("lime", v=0.3))
 
         # Create game
-        create_title = kx.Label(text="[b]Create new game[/b]")
+        create_title = kx.XLabel(text="[b]Create new game[/b]")
         create_title.set_size(y=LINE_WIDGET_HEIGHT)
-        self.create_name_input = kx.Entry()
-        self.create_name_input.bind(on_text_validate=self._create_game)
-        create_name = _get_entry_frame(self.create_name_input, "Name:")
-        self.create_password_input = kx.Entry(password=True)
-        self.create_password_input.bind(on_text_validate=self._create_game)
-        create_password = _get_entry_frame(self.create_password_input, "Password:")
-        new_game_btn = kx.Button(text="Create game", on_release=self._create_game)
-        new_game_btn.set_size(y=LINE_WIDGET_HEIGHT)
-        create_panel_ = kx.Box(orientation="vertical")
-        create_panel_.add(create_title, create_name, create_password, new_game_btn)
-        create_height_ = LINE_WIDGET_HEIGHT * (len(create_panel_.children) + 1)
-        create_panel_.set_size(x=350, y=create_height_)
-        create_panel = kx.Anchor()
-        create_panel.add(create_panel_)
-        create_panel.make_bg(kx.get_color("pink", v=0.3))
+        pwidgets = dict(
+            name=kx.XInputPanelWidget("Name"),
+            password=kx.XInputPanelWidget("Password", "password"),
+        )
+        self.create_panel = kx.XInputPanel(
+            pwidgets,
+            invoke_text="Create game",
+            reset_text="",
+        )
+        self.create_panel.bind(on_invoke=self._create_game)
+        create_panel_ = kx.XAnchor.wrap(self.create_panel, x=0.8)
+        create_panel_.set_size(y=300)
+        create_frame = kx.XBox(orientation="vertical")
+        create_frame.add_widgets(create_title, create_panel_)
+        create_frame.make_bg(kx.get_color("pink", v=0.3))
 
         # Assemble
-        right_panel = kx.Box(orientation="vertical")
-        right_panel.add(info_panel, create_panel)
-        self.lobby_frame = kx.Box()
-        self.lobby_frame.add(join_panel, right_panel)
+        right_frame = kx.XBox(orientation="vertical")
+        right_frame.add_widgets(info_panel, create_frame)
+        self.lobby_frame = kx.XBox()
+        self.lobby_frame.add_widgets(list_frame, right_frame)
         self.show_lobby()
 
     def show_lobby(self, *args):
         self.main_frame.clear_widgets()
-        self.main_frame.add(self.lobby_frame)
+        self.main_frame.add_widget(self.lobby_frame)
         self._refresh_games()
         self._show_game()
         self.app.controller.set("server.lobby")
@@ -125,7 +113,7 @@ class ServerFrame(kx.Anchor):
     def make_game(self):
         self.main_frame.clear_widgets()
         game_frame = gui.gameframe.GameFrame(self._client)
-        self.main_frame.add(game_frame)
+        self.main_frame.add_widget(game_frame)
         self.app.controller.set("server.game")
 
     def update(self):
@@ -153,6 +141,7 @@ class ServerFrame(kx.Anchor):
         password = "[i]Password protected.[/i]" if passprot else ""
         text = f"[b]{name}[/b]\n\n{users} users in game.\n\n{password}"
         self.game_info_label.text = text
+        self.join_panel.set_showing("password", passprot)
 
     def _create_game(
         self,
@@ -162,15 +151,18 @@ class ServerFrame(kx.Anchor):
     ):
         if not self._client:
             return
-        name = name or self.create_name_input.text
-        password = password or self.create_password_input.text or None
+        values = self.create_panel.get_values()
+        name = name or values["name"]
+        password = password or values["password"] or None
         self._client.create_game(name, password)
 
     def _join_game(self, *args, name: Optional[str] = None):
         if not self._client:
             return
         name = name or self.games_list.items[self.games_list.selection]
-        password = self.join_password_input.text or None
+        password = None
+        if self.games_dir.get(name).get("password_protected"):
+            password = self.join_panel.get_value("password")
         self._client.join_game(name, password)
 
     def _disconnect(self, *args):
@@ -190,11 +182,11 @@ class ServerFrame(kx.Anchor):
         self.games_list.items = games
         self._show_game()
 
-    def _on_game_invoked(self, w, index: int, label: str):
+    def _on_game_invoke(self, w, index: int, label: str):
         self._join_game(name=label)
 
     def _focus_create(self):
-        self.create_name_input.focus = True
+        self.create_panel.widgets["name"].set_focus()
 
     def _focus_list(self):
         self.games_list.focus = True

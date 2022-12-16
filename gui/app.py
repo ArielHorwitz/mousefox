@@ -25,7 +25,7 @@ def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
     return new_dict
 
 
-class App(kx.App):
+class App(kx.XApp):
     def __init__(
         self,
         maximize: bool = True,
@@ -46,7 +46,7 @@ class App(kx.App):
             if offset:
                 kx.schedule_once(lambda *a: self.set_position(*offset))
         self.title = "KPdemo"
-        self.controller = kx.HotkeyController(
+        self.controller = kx.XHotkeyController(
             logger=logger.debug,
             log_register=True,
             log_bind=True,
@@ -57,7 +57,7 @@ class App(kx.App):
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
 
-    def _register_controller(self, controller: kx.HotkeyController):
+    def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)
         hotkeys = _flatten_hotkey_paths(loaded_dict)
         for control, hotkeys in hotkeys.items():
@@ -74,24 +74,24 @@ class App(kx.App):
         self.root.make_bg(kx.get_color("purple", v=0.05))
         self.connection_frame = gui.connectframe.ConnectionFrame()
         self.server_frame = gui.serverframe.ServerFrame()
-        self.main_frame = kx.Anchor()
-        self.status_bar = kx.Label(halign="left", italic=True, padding=(10, 0))
+        self.main_frame = kx.XAnchor()
+        self.status_bar = kx.XLabel(halign="left", italic=True, padding=(10, 0))
         self.status_bar.set_size(y=40)
         self.status_bar.make_bg(kx.get_color("purple", v=0.2))
-        root_frame = kx.Box(orientation="vertical")
-        root_frame.add(self.main_frame, self.status_bar)
-        self.root.add(root_frame)
+        root_frame = kx.XBox(orientation="vertical")
+        root_frame.add_widgets(self.main_frame, self.status_bar)
+        self.root.add_widget(root_frame)
         self.show_connection_screen()
 
     def show_connection_screen(self):
         self.main_frame.clear_widgets()
-        self.main_frame.add(self.connection_frame)
+        self.main_frame.add_widget(self.connection_frame)
         self.controller.set("connection")
 
     def show_server_screen(self, client):
         client.on_connection = None
         self.main_frame.clear_widgets()
-        self.main_frame.add(self.server_frame)
+        self.main_frame.add_widget(self.server_frame)
         self.server_frame.set_client(client)
         self.controller.set("server.lobby")
 
