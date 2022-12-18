@@ -1,1 +1,1 @@
-"""Game subpackage with server and client adapters."""
+"""Logic subpackage with game backend and client frontend."""

@@ -1,7 +1,8 @@
 
+from typing import Optional
 from dataclasses import dataclass
 import kex as kx
-import logic.client
+import pgnet
 import util
 
 
@@ -52,8 +53,17 @@ class _ConnectionConfig:
 
 
 class ConnectionFrame(kx.XAnchor):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        client_cls: Optional[pgnet.BaseClient] = None,
+        localhost_cls: Optional[pgnet.BaseClient] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
+        if not any((client_cls, localhost_cls)):
+            raise RuntimeError("Need at least one client class.")
+        self._client_cls = client_cls
+        self._localhost_cls = localhost_cls
         self.make_widgets()
         self.app.controller.bind("connection.start", self._invoke_play)
 
@@ -74,6 +84,10 @@ class ConnectionFrame(kx.XAnchor):
         left_frame.add_widgets(title_label, info_label)
         left_frame.make_bg(kx.get_color("cyan", v=0.3))
         # Connection details
+        if not self._client_cls and config.online:
+            config.online = False
+        elif not self._localhost_cls and not config.online:
+            config.online = True
         pwidgets = dict(
             online=kx.XInputPanelWidget(
                 "Online",
@@ -81,16 +95,26 @@ class ConnectionFrame(kx.XAnchor):
                 default=config.online,
                 bold=True,
                 italic=False,
+                showing=all((self._client_cls, self._localhost_cls)),
             ),
             username=kx.XInputPanelWidget("Username", default=config.username),
-            password=kx.XInputPanelWidget("Password", "password"),
-            address=kx.XInputPanelWidget("IP Address", default=config.address),
+            password=kx.XInputPanelWidget(
+                "Password",
+                "password",
+                showing=config.online,
+            ),
+            address=kx.XInputPanelWidget(
+                "IP Address",
+                default=config.address,
+                showing=config.online,
+            ),
             advanced=kx.XInputPanelWidget(
                 "Advanced",
                 "bool",
                 default=False,
                 bold=True,
                 italic=False,
+                showing=config.online,
             ),
             port=kx.XInputPanelWidget(
                 "Port number",
@@ -129,20 +153,20 @@ class ConnectionFrame(kx.XAnchor):
         advanced = online and get_value("advanced")
         online = get_value("online")
         username = get_value("username")
-        password = get_value("password") if online else _ConnectionConfig.password
+        password = get_value("password")
         address = get_value("address") if online else _ConnectionConfig.address
         port = get_value("port") if advanced else _ConnectionConfig.port
         pubkey = get_value("pubkey") if advanced else _ConnectionConfig.pubkey
         if online:
-            client = logic.client.Client(
+            client = self._client_cls(
                 address=address,
                 port=port,
-                username=username or None,
+                username=username,
                 password=password,
                 verify_server_pubkey=pubkey or None,
             )
         else:
-            client = logic.client.LocalhostClient(username=username)
+            client = self._localhost_cls(username=username)
         self.app.set_client(client)
         config = _ConnectionConfig(online, username, address, port, pubkey)
         config.save_to_disk()

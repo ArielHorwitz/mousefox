@@ -1,14 +1,14 @@
 
 import kex as kx
 import pgnet
-import logic.client
+from .client import Client
 
 
 LINE_WIDGET_HEIGHT = 45
 
 
-class GameFrame(kx.XAnchor):
-    def __init__(self, client: logic.client.Client, **kwargs):
+class GameWidget(kx.XAnchor):
+    def __init__(self, client: Client, **kwargs):
         super().__init__(**kwargs)
         self.client = client
         self.make_bg(kx.get_color("pink", v=0.3))

@@ -5,9 +5,10 @@ import asyncio
 import functools
 import pathlib
 import kex as kx
+import kex.kivy
+import pgnet
 import gui.connectframe
 import gui.serverframe
-import logic.client
 import util
 
 
@@ -28,13 +29,17 @@ def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
 class App(kx.XApp):
     def __init__(
         self,
+        *,
+        game_widget: kex.kivy.Widget,
+        client_cls: Optional[pgnet.BaseClient] = None,
+        localhost_cls: Optional[pgnet.BaseClient] = None,
         maximize: bool = True,
         borderless: bool = False,
         size: Optional[tuple[int, int]] = None,
         offset: Optional[tuple[int, int]] = None,
     ):
         super().__init__()
-        self._client: Optional[logic.client.Client] = None
+        self._client: Optional[pgnet.BaseClient] = None
         if borderless:
             self.toggle_borderless(True)
         if size:
@@ -54,6 +59,11 @@ class App(kx.XApp):
             log_callback=True,
         )
         self._register_controller(self.controller)
+        self.connection_frame = gui.connectframe.ConnectionFrame(
+            client_cls=client_cls,
+            localhost_cls=localhost_cls,
+        )
+        self.server_frame = gui.serverframe.ServerFrame(game_widget)
         self.make_widgets()
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
@@ -73,8 +83,6 @@ class App(kx.XApp):
     def make_widgets(self):
         self.root.clear_widgets()
         self.root.make_bg(kx.get_color("purple", v=0.05))
-        self.connection_frame = gui.connectframe.ConnectionFrame()
-        self.server_frame = gui.serverframe.ServerFrame()
         self.main_frame = kx.XAnchor()
         self.status_bar = kx.XLabel(halign="left", italic=True, padding=(10, 0))
         self.status_bar.set_size(y=40)
@@ -112,10 +120,10 @@ class App(kx.XApp):
     def set_feedback_warning(self, *args, **kwargs):
         self.set_feedback(*args, color=(1, 0.2, 0.2), **kwargs)
 
-    def set_client(self, client: logic.client.Client, /):
+    def set_client(self, client: pgnet.BaseClient, /):
         asyncio.create_task(self._async_set_client(client))
 
-    async def _async_set_client(self, client: logic.client.Client, /):
+    async def _async_set_client(self, client: pgnet.BaseClient, /):
         if self._client:
             self._client.close()
         self._client = client

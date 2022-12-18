@@ -2,10 +2,9 @@
 from typing import Optional
 from loguru import logger
 import kex as kx
+import kex.kivy
 import arrow
 import pgnet
-import gui.gameframe
-import logic.client
 
 
 LINE_WIDGET_HEIGHT = 40
@@ -13,9 +12,10 @@ AUTO_REFRESH_INTERVAL = 5
 
 
 class ServerFrame(kx.XAnchor):
-    def __init__(self, **kwargs):
+    def __init__(self, game_widget_class: kex.kivy.Widget, **kwargs):
         super().__init__(**kwargs)
-        self._client: Optional[logic.client.Client] = None
+        self._game_widget_class = game_widget_class
+        self._client: Optional[pgnet.BaseClient] = None
         self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.games_dir = dict()
         self.make_bg(kx.get_color("orange", v=0.3))
@@ -27,7 +27,7 @@ class ServerFrame(kx.XAnchor):
         self.app.controller.bind("server.lobby.focus_create", self._focus_create)
         self.app.controller.bind("server.lobby.focus_list", self._focus_list)
 
-    def set_client(self, client: Optional[logic.client.Client]):
+    def set_client(self, client: Optional[pgnet.BaseClient]):
         if self._client:
             self._client.on_game = None
         self._client = client
@@ -112,7 +112,7 @@ class ServerFrame(kx.XAnchor):
 
     def make_game(self):
         self.main_frame.clear_widgets()
-        game_frame = gui.gameframe.GameFrame(self._client)
+        game_frame = self._game_widget_class(self._client)
         self.main_frame.add_widget(game_frame)
         self.app.controller.set("server.game")
 

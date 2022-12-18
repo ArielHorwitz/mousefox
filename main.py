@@ -32,6 +32,7 @@ import docopt
 import pgnet
 import pgnet.devclient
 import util
+import logic.game
 from loguru import logger
 
 
@@ -92,8 +93,6 @@ def _delete_server_file():
 
 
 def _get_devclient_coro(args):
-    import logic.game
-
     return pgnet.devclient.async_run(
         remote=args.remote,
         game=logic.game.Game,
@@ -102,8 +101,6 @@ def _get_devclient_coro(args):
 
 
 def _get_server_coro(args):
-    import logic.game
-
     kw = dict(save_file=util.SERVER_SAVE_FILE)
     if args.port:
         kw["port"] = int(args.port)
@@ -115,9 +112,15 @@ def _get_server_coro(args):
 
 
 def _get_app_coro(args):
+    # Late imports because Kivy and some other libraries do not play nice
     import gui.app
+    import logic.client
+    import logic.gui
 
     kw = dict(
+        game_widget=logic.gui.GameWidget,
+        client_cls=logic.client.Client,
+        localhost_cls=logic.client.LocalhostClient,
         borderless=args.borderless,
         maximize=not args.unmaximize,
     )
