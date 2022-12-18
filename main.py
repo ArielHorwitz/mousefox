@@ -10,8 +10,8 @@ Options:
 GUI Options:
   -u, --unmaximize            Do not maximize the window automatically
   -b, --borderless            Remove window border
-  --size <size>               Window size in pixels (e.g. 800x600)
-  --offset <offset>           Window offset in pixels (e.g. 200x50)
+  --size <size>               Window size in pixels (e.g. `800x600`)
+  --offset <offset>           Window offset in pixels (e.g. `200x50`)
 
 Server Options:
   -p, --admin-password <password>
@@ -123,10 +123,8 @@ def _get_app_coro(args):
     )
     if args.size:
         kw["size"] = tuple(int(_) for _ in args.size.split("x", 1))
-        kw["maximize"] = False
     if args.offset:
         kw["offset"] = tuple(int(_) for _ in args.offset.split("x", 1))
-        kw["maximize"] = False
     app = gui.app.App(**kw)
     return app.async_run()
 

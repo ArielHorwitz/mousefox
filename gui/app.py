@@ -37,14 +37,15 @@ class App(kx.XApp):
         self._client: Optional[logic.client.Client] = None
         if borderless:
             self.toggle_borderless(True)
-        if maximize:
-            self.maximize()
+        if size:
+            size = tuple(max(c) for c in zip(MINIMUM_SIZE, size))
+            self.set_size(*size)
         else:
-            if size:
-                size = tuple(max(c) for c in zip(MINIMUM_SIZE, size))
-                self.set_size(*size)
-            if offset:
-                kx.schedule_once(lambda *a: self.set_position(*offset))
+            self.set_size(*MINIMUM_SIZE)
+        if offset:
+            kx.schedule_once(lambda *a: self.set_position(*offset))
+        if maximize:
+            kx.schedule_once(lambda *a: self.maximize())
         self.title = "KPdemo"
         self.controller = kx.XHotkeyController(
             logger=logger.debug,
