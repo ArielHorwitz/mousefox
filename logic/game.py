@@ -30,8 +30,7 @@ class Game(BaseGame):
         self.outcome: str = "In progress."
         self.in_progress: bool = False
         self.commands = dict(
-            get_state_hash=self.get_state_hash,
-            get_full_data=self.get_full_data,
+            check_update=self.check_update,
             play_square=self.play_square,
         )
 
@@ -100,19 +99,19 @@ class Game(BaseGame):
         return "O" if username == self.players[0] else "X"
 
     # Commands
-    def get_state_hash(self, packet: Packet) -> Response:
-        r = Response("Current hash", dict(state_hash=self._state_hash))
-        return r
-
-    def get_full_data(self, packet: Packet) -> Response:
+    def check_update(self, packet: Packet) -> Response:
+        state_hash = self._state_hash
+        client_hash = packet.payload.get("state_hash")
+        if client_hash == state_hash:
+            return Response("Up to date.", dict(state_hash=state_hash))
         payload = dict(
-            state_hash=self._state_hash,
+            state_hash=state_hash,
             players=self.players,
             board=self.board,
             your_turn=packet.username == self._current_username,
             info=self._get_user_info(packet.username),
         )
-        return Response("Full data", payload)
+        return Response("Updated state.", payload)
 
     def play_square(self, packet: Packet) -> Response:
         username = self._current_username

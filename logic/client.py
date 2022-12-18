@@ -25,30 +25,22 @@ class Client(pgnet.client.BaseClient):
         self.check_update(do_next=False)
 
     def check_update(self, *, do_next: bool = True):
+        state_hash = self.game_state.get("state_hash")
         self.send(
-            pgnet.Packet("get_state_hash"),
-            self._check_update_tick,
+            pgnet.Packet("check_update", dict(state_hash=state_hash)),
+            self._apply_update,
             do_next=do_next,
         )
 
-    def _check_update_tick(self, state_hash_response: pgnet.Response):
-        server_hash = state_hash_response.payload.get("state_hash")
+    def _apply_update(self, response: pgnet.Response):
+        server_hash = response.payload.get("state_hash")
         if server_hash == self.game_state.get("state_hash"):
             return
-        logger.debug("Fetching new data...")
-        self.send(
-            pgnet.Packet("get_full_data"),
-            self._apply_update,
-            do_next=True,
-        )
-
-    def _apply_update(self, data_response: pgnet.Response):
-        self.game_state = data_response.payload
+        self.game_state = response.payload
         new_hash = self.game_state.get("state_hash")
         logger.debug(f"New game state (hash: {new_hash})")
         if not new_hash:
             logger.warning(f"Missing state hash: {self.game_state=}")
-        self.flush_queue()
         if self.on_game_state:
             self.on_game_state(self.game_state)
 
