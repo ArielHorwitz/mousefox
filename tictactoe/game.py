@@ -1,4 +1,4 @@
-"""Game logic."""
+"""Tic-tac-toe game logic."""
 
 from typing import Optional
 import json

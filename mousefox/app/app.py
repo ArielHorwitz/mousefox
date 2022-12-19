@@ -1,3 +1,4 @@
+"""MouseFox GUI app."""
 
 from typing import Optional
 from loguru import logger
@@ -7,23 +8,13 @@ import pathlib
 import kvex as kx
 import kvex.kivy
 import pgnet
-import gui.connectframe
-import gui.serverframe
-import util
+from .connectframe import ConnectionFrame
+from .serverframe import ServerFrame
+from .. import util
 
 
 HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
 MINIMUM_SIZE = (1024, 768)
-
-
-def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
-    new_dict = dict()
-    for k, v in nested.items():
-        if isinstance(v, dict):
-            new_dict |= _flatten_hotkey_paths(v, f"{prefix}{k}.")
-        else:
-            new_dict[f"{prefix}{k}"] = v
-    return new_dict
 
 
 class App(kx.XApp):
@@ -37,6 +28,7 @@ class App(kx.XApp):
         borderless: bool = False,
         size: Optional[tuple[int, int]] = None,
         offset: Optional[tuple[int, int]] = None,
+        title: str = "MouseFox",
     ):
         super().__init__()
         self._client: Optional[pgnet.BaseClient] = None
@@ -51,7 +43,7 @@ class App(kx.XApp):
             kx.schedule_once(lambda *a: self.set_position(*offset))
         if maximize:
             kx.schedule_once(lambda *a: self.maximize())
-        self.title = "KPdemo"
+        self.title = title
         self.controller = kx.XHotkeyController(
             logger=logger.debug,
             log_register=True,
@@ -59,11 +51,11 @@ class App(kx.XApp):
             log_callback=True,
         )
         self._register_controller(self.controller)
-        self.connection_frame = gui.connectframe.ConnectionFrame(
+        self.connection_frame = ConnectionFrame(
             client_cls=client_cls,
             localhost_cls=localhost_cls,
         )
-        self.server_frame = gui.serverframe.ServerFrame(game_widget)
+        self.server_frame = ServerFrame(game_widget)
         self.make_widgets()
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
@@ -146,3 +138,13 @@ class App(kx.XApp):
         if self._client:
             self._client.close()
         return r
+
+
+def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
+    new_dict = dict()
+    for k, v in nested.items():
+        if isinstance(v, dict):
+            new_dict |= _flatten_hotkey_paths(v, f"{prefix}{k}.")
+        else:
+            new_dict[f"{prefix}{k}"] = v
+    return new_dict

@@ -1,11 +1,9 @@
-"""Logic client."""
+"""Tic-tac-toe client."""
 
 from typing import Optional, Callable
 from loguru import logger
 import pgnet.client
 import pgnet.localhost
-import logic.game
-import util
 
 
 class Client(pgnet.client.BaseClient):
@@ -44,11 +42,4 @@ class Client(pgnet.client.BaseClient):
 
 class LocalhostClient(pgnet.localhost.LocalhostClientMixin, Client):
     """Localhost version of `Client`."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            game=logic.game.Game,
-            server_kwargs=dict(save_file=util.SERVER_SAVE_FILE),
-            **kwargs,
-        )
+    pass

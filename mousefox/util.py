@@ -29,9 +29,9 @@ def file_dump(file: os.PathLike, d: str, clear: bool = True):
 def get_appdata_dir() -> Path:
     """Return path to the user's app data folder.
 
-    - Windows: `~\\AppData\\Local\\kpdemo`
-    - Mac OS: `~/Library/Local/kpdemo`
-    - Linux: `~/.local/share/kpdemo`
+    - Windows: `~\\AppData\\Local\\mousefox`
+    - Mac OS: `~/Library/Local/mousefox`
+    - Linux: `~/.local/share/mousefox`
     """
     if platform.system() == "Windows":
         parts = ["AppData", "Local"]
@@ -39,7 +39,7 @@ def get_appdata_dir() -> Path:
         parts = ["Library"]
     else:
         parts = [".local", "share"]
-    path = Path.home().joinpath(*parts) / "kpdemo"
+    path = Path.home().joinpath(*parts) / "mousefox"
     path.mkdir(parents=True, exist_ok=True)
     return path
 

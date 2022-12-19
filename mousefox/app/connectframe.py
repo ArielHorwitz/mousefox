@@ -3,27 +3,20 @@ from typing import Optional
 from dataclasses import dataclass
 import kvex as kx
 import pgnet
-import util
+from .. import util
 
 
 LINE_HEIGHT = 40
-TITLE_TEXT = "[b][u]Welcome to KPdemo[/u][/b]"
+TITLE_TEXT = "[b][u]Welcome to MouseFox[/u][/b]"
 INFO_TEXT = (
-    "This online multiplayer game of tic-tac-toe is a demo for the Kex and"
-    " PGNet Python libraries."
+    "This online multiplayer game of tic-tac-toe is a builtin game example to"
+    " demo MouseFox."
     "\n\n"
     "[u]Connecting to a server[/u]"
     "\n\n"
-    "To register, simply choose a username and password and log in (if the"
-    " server allows it)."
-    "\n\n"
-    "Server verification is optional. If set with the public key given by the"
-    " server owner, it will verify the server at the address."
-    "\n\n"
-    ""
+    "To register (if the server allows it) simply choose a username and password"
+    " and log in."
 )
-
-
 CONFIG_FILE = util.get_appdata_dir() / "connection_config.txt"
 
 

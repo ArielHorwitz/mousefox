@@ -1,3 +1,4 @@
+"""GUI widget for tic tac toe."""
 
 import kvex as kx
 import pgnet
