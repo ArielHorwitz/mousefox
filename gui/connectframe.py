@@ -1,7 +1,7 @@
 
 from typing import Optional
 from dataclasses import dataclass
-import kex as kx
+import kvex as kx
 import pgnet
 import util
 

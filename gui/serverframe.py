@@ -1,8 +1,8 @@
 
 from typing import Optional
 from loguru import logger
-import kex as kx
-import kex.kivy
+import kvex as kx
+import kvex.kivy
 import arrow
 import pgnet
 
@@ -12,7 +12,7 @@ AUTO_REFRESH_INTERVAL = 5
 
 
 class ServerFrame(kx.XAnchor):
-    def __init__(self, game_widget_class: kex.kivy.Widget, **kwargs):
+    def __init__(self, game_widget_class: kvex.kivy.Widget, **kwargs):
         super().__init__(**kwargs)
         self._game_widget_class = game_widget_class
         self._client: Optional[pgnet.BaseClient] = None

@@ -1,5 +1,5 @@
 
-import kex as kx
+import kvex as kx
 import pgnet
 from .client import Client
 

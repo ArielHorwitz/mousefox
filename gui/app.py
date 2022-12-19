@@ -4,8 +4,8 @@ from loguru import logger
 import asyncio
 import functools
 import pathlib
-import kex as kx
-import kex.kivy
+import kvex as kx
+import kvex.kivy
 import pgnet
 import gui.connectframe
 import gui.serverframe
@@ -30,7 +30,7 @@ class App(kx.XApp):
     def __init__(
         self,
         *,
-        game_widget: kex.kivy.Widget,
+        game_widget: kvex.kivy.Widget,
         client_cls: Optional[pgnet.BaseClient] = None,
         localhost_cls: Optional[pgnet.BaseClient] = None,
         maximize: bool = True,
