@@ -15,20 +15,25 @@ WINNING_LINES = [
     (0, 4, 8),
     (2, 4, 6),
 ]
-
-
-BLANK_SAVE_STRING = json.dumps(dict(board=[""] * 9, players=[], x_turn=True))
+BLANK_DATA = dict(
+    board=[""] * 9,
+    players=[],
+    x_turn=True,
+    in_progress=False,
+)
 
 
 class Game(BaseGame):
     def __init__(self, *args, save_string: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
-        data = json.loads(save_string or BLANK_SAVE_STRING)
+        data = json.loads(save_string or json.dumps(BLANK_DATA))
         self.board: list[str] = data["board"]
         self.players: list[str] = data["players"]
         self.x_turn: bool = data["x_turn"]
-        self.outcome: str = "In progress."
-        self.in_progress: bool = False
+        self.outcome: str = "Waiting for players."
+        if data["in_progress"]:
+            self.outcome = "In progress."
+        self.in_progress: bool = data["in_progress"]
         self.commands = dict(
             check_update=self.check_update,
             play_square=self.play_square,
@@ -43,6 +48,7 @@ class Game(BaseGame):
             board=self.board,
             players=self.players,
             x_turn=self.x_turn,
+            in_progress=self.in_progress,
         )
         return json.dumps(data)
 
@@ -51,6 +57,7 @@ class Game(BaseGame):
             self.players.append(player)
         if len(self.players) >= 2:
             self.in_progress = True
+            self.outcome = "In progress."
 
     def user_left(self, player: str):
         if player in self.players[2:]:
