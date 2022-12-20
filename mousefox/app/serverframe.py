@@ -134,7 +134,8 @@ class ServerFrame(kx.XAnchor):
         name = self.games_list.items[self.games_list.selection]
         game = self.games_dir.get(name)
         if not game:
-            self.game_info_label.text = "Create a new game."
+            self.game_info_label.text = "No games found. Create a new game."
+            self.join_panel.set_showing("password", False)
             return
         users = game.get("users")
         passprot = game.get("password_protected")
@@ -161,7 +162,10 @@ class ServerFrame(kx.XAnchor):
             return
         name = name or self.games_list.items[self.games_list.selection]
         password = None
-        if self.games_dir.get(name).get("password_protected"):
+        game = self.games_dir.get(name)
+        if not game:
+            return
+        if game.get("password_protected"):
             password = self.join_panel.get_value("password")
         self._client.join_game(name, password)
 
@@ -186,7 +190,7 @@ class ServerFrame(kx.XAnchor):
         self._join_game(name=label)
 
     def _focus_create(self):
-        self.create_panel.widgets["name"].set_focus()
+        self.create_panel.set_focus("name")
 
     def _focus_list(self):
         self.games_list.focus = True
