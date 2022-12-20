@@ -1,7 +1,10 @@
 """Tic-tac-toe game logic."""
 
 from typing import Optional
+import arrow
+import copy
 import json
+import random
 from pgnet import BaseGame, Packet, Response, STATUS_UNEXPECTED
 
 
@@ -21,12 +24,15 @@ BLANK_DATA = dict(
     x_turn=True,
     in_progress=False,
 )
+BOT_NAME = "Tictactoe Bot"
+BOT_THINK_TIME = 1
 
 
 class Game(BaseGame):
     def __init__(self, *args, save_string: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         data = json.loads(save_string or json.dumps(BLANK_DATA))
+        self._next_bot_turn = arrow.now()
         self.board: list[str] = data["board"]
         self.players: list[str] = data["players"]
         self.x_turn: bool = data["x_turn"]
@@ -37,11 +43,12 @@ class Game(BaseGame):
         self.commands = dict(
             check_update=self.check_update,
             play_square=self.play_square,
+            single_player=self.set_single_player,
         )
 
     @property
     def persistent(self):
-        return self.in_progress and any(self.board)
+        return self.in_progress and any(self.board) and BOT_NAME not in self.players
 
     def get_save_string(self) -> str:
         data = dict(
@@ -55,7 +62,8 @@ class Game(BaseGame):
     def user_joined(self, player: str):
         if player not in self.players:
             self.players.append(player)
-        if len(self.players) >= 2:
+        if len(self.players) == 2:
+            random.shuffle(self.players)
             self.in_progress = True
             self.outcome = "In progress."
 
@@ -86,13 +94,23 @@ class Game(BaseGame):
             return ""
         return self.players[int(self.x_turn)]
 
-    def _check_progress(self):
+    @staticmethod
+    def _winning_mark(board: list[str]) -> Optional[str]:
         for a, b, c in WINNING_LINES:
-            mark = self.board[a]
-            if mark and mark == self.board[b] == self.board[c]:
-                self.in_progress = False
-                self.outcome = f"{self._mark_to_username(mark)} playing as {mark} wins!"
-                return
+            mark = board[a]
+            if mark and mark == board[b] == board[c]:
+                return mark
+        return None
+
+    def _check_progress(self):
+        winning_mark = self._winning_mark(self.board)
+        if winning_mark:
+            self.in_progress = False
+            self.outcome = (
+                f"{self._mark_to_username(winning_mark)}"
+                f" playing as {winning_mark} wins!"
+            )
+            return
         if all(self.board):
             self.in_progress = False
             self.outcome = "Draw."
@@ -105,8 +123,34 @@ class Game(BaseGame):
         assert username in self.players[:2]
         return "O" if username == self.players[0] else "X"
 
+    def _handle_bot(self):
+        if self._current_username != BOT_NAME:
+            return
+        if arrow.now() <= self._next_bot_turn:
+            return
+        my_mark = self._username_to_mark(BOT_NAME)
+        enemy_player_idx = int(not bool(self.players.index(self._current_username)))
+        enemy_mark = self._username_to_mark(self.players[enemy_player_idx])
+        empty_squares = [s for s in range(9) if not self.board[s]]
+        random.shuffle(empty_squares)
+        # Find winning moves
+        for s in empty_squares:
+            new_board = copy.copy(self.board)
+            new_board[s] = my_mark
+            if self._winning_mark(new_board):
+                self._do_play_square(s, my_mark)
+                return
+        # Find losing threats
+        for s in empty_squares:
+            new_board = copy.copy(self.board)
+            new_board[s] = enemy_mark
+            if self._winning_mark(new_board):
+                break
+        self._do_play_square(s, my_mark)
+
     # Commands
     def check_update(self, packet: Packet) -> Response:
+        self._handle_bot()
         state_hash = self._state_hash
         client_hash = packet.payload.get("state_hash")
         if client_hash == state_hash:
@@ -120,17 +164,28 @@ class Game(BaseGame):
         )
         return Response("Updated state.", payload)
 
+    def set_single_player(self, packet: Packet) -> Response:
+        if len(self.players) >= 2:
+            return Response("Game has already started.", status=STATUS_UNEXPECTED)
+        self.user_joined(BOT_NAME)
+        self._next_bot_turn = arrow.now().shift(seconds=BOT_THINK_TIME)
+        return Response("Started single player mode.")
+
     def play_square(self, packet: Packet) -> Response:
         username = self._current_username
-        if packet.username != username:
+        if packet.username != username or username == BOT_NAME:
             return Response("Not your turn.", status=STATUS_UNEXPECTED)
         square = int(packet.payload["square"])
         if self.board[square]:
             return Response("Square is already marked.", status=STATUS_UNEXPECTED)
-        self.board[square] = self._username_to_mark(username)
+        self._do_play_square(square, self._username_to_mark(username))
+        return Response("Marked square.")
+
+    def _do_play_square(self, square: int, mark: str, /):
+        self.board[square] = mark
         self.x_turn = not self.x_turn
         self._check_progress()
-        return Response("Marked square.")
+        self._next_bot_turn = arrow.now().shift(seconds=BOT_THINK_TIME)
 
     def _get_user_info(self, username: str) -> str:
         if not self.in_progress:

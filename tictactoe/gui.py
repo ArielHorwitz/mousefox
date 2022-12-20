@@ -12,7 +12,6 @@ class GameWidget(kx.XAnchor):
     def __init__(self, client: Client, **kwargs):
         super().__init__(**kwargs)
         self.client = client
-        self.make_bg(kx.get_color("pink", v=0.3))
         self.make_widgets()
         self.client.on_game_state = self._on_game_state
         self._on_game_state(self.client.game_state)
@@ -20,9 +19,12 @@ class GameWidget(kx.XAnchor):
 
     def make_widgets(self):
         self.info_panel = kx.XLabel(halign="left", valign="top", padding=(10, 5))
-        self.info_panel.make_bg(kx.get_color("cyan", v=0.2))
-        leave_btn = kx.XButton(text="Leave game", on_release=self._leave_game)
-        leave_btn.set_size(y=LINE_WIDGET_HEIGHT)
+        self.single_player_btn = kx.XButton(
+            text="Start single player",
+            on_release=self._single_player,
+        )
+        spbtn = kx.XAnchor.wrap(self.single_player_btn, x=0.5)
+        spbtn.set_size(y=LINE_WIDGET_HEIGHT)
         board_frame = kx.XGrid(cols=3)
         self.board = []
         for i in range(9):
@@ -34,7 +36,8 @@ class GameWidget(kx.XAnchor):
             board_frame.add_widget(square)
         # Assemble
         panel_frame = kx.XBox(orientation="vertical")
-        panel_frame.add_widgets(self.info_panel, leave_btn)
+        panel_frame.add_widgets(self.info_panel, spbtn)
+        panel_frame.make_bg(kx.get_color("cyan", v=0.2))
         main_frame = kx.XBox()
         main_frame.add_widgets(panel_frame, board_frame)
         self.clear_widgets()
@@ -57,9 +60,10 @@ class GameWidget(kx.XAnchor):
         marks = tuple(str(s or "_") for s in state.get("board", [None] * 9))
         for square_btn, mark in zip(self.board, marks):
             square_btn.text = mark
+        self.single_player_btn.disabled = len(state.get("players", "--")) >= 2
 
     def _play_square(self, index: int, /):
         self.client.send(pgnet.Packet("play_square", dict(square=index)))
 
-    def _leave_game(self, *args):
-        self.client.leave_game()
+    def _single_player(self, *args):
+        self.client.send(pgnet.Packet("single_player"), print)
