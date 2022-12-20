@@ -182,7 +182,7 @@ class ServerFrame(kx.XAnchor):
 
     def _on_games_dir_response(self, games_dir_response: pgnet.Response):
         self.games_dir = games_dir_response.payload.get("games")
-        games = list(self.games_dir.keys()) or [""]
+        games = sorted(self.games_dir.keys()) or [""]
         self.games_list.items = games
         self._show_game()
 
