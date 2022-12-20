@@ -49,10 +49,8 @@ class ServerFrame(kx.XAnchor):
             on_invoke=self._on_game_invoke,
             selection=self._show_game,
         )
-        refresh_btn = kx.XButton(text="Refresh", on_release=self._refresh_games)
-        refresh_btn.set_size(y=LINE_WIDGET_HEIGHT)
         list_frame = kx.XBox(orientation="vertical")
-        list_frame.add_widgets(title, self.games_list, refresh_btn)
+        list_frame.add_widgets(title, self.games_list)
 
         # Game info
         info_title = kx.XLabel(text="[b]Game Details[/b]")
