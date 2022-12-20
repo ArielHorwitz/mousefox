@@ -8,7 +8,7 @@ import pgnet
 
 
 LINE_WIDGET_HEIGHT = 40
-AUTO_REFRESH_INTERVAL = 5
+AUTO_REFRESH_INTERVAL = 1
 
 
 class ServerFrame(kx.XAnchor):
