@@ -1,5 +1,5 @@
 
-from typing import Optional
+from typing import Optional, Type
 from dataclasses import dataclass
 import kvex as kx
 import pgnet
@@ -48,8 +48,8 @@ class _ConnectionConfig:
 class ConnectionFrame(kx.XAnchor):
     def __init__(
         self,
-        client_cls: Optional[pgnet.BaseClient] = None,
-        localhost_cls: Optional[pgnet.BaseClient] = None,
+        client_cls: Optional[Type[pgnet.BaseClient]] = None,
+        localhost_cls: Optional[Type[pgnet.BaseClient]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

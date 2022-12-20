@@ -1,6 +1,6 @@
 """MouseFox GUI app."""
 
-from typing import Optional, Literal
+from typing import Optional, Literal, Type
 from loguru import logger
 import asyncio
 import functools
@@ -22,8 +22,8 @@ class App(kx.XApp):
         self,
         *,
         game_widget: kvex.kivy.Widget,
-        client_cls: Optional[pgnet.BaseClient] = None,
-        localhost_cls: Optional[pgnet.BaseClient] = None,
+        client_cls: Optional[Type[pgnet.BaseClient]] = None,
+        localhost_cls: Optional[Type[pgnet.BaseClient]] = None,
         maximize: bool = True,
         borderless: bool = False,
         size: Optional[tuple[int, int]] = None,
@@ -104,7 +104,7 @@ class App(kx.XApp):
         self.connection_frame.set_focus()
         self.controller.set("connection")
 
-    def show_server_screen(self, client):
+    def show_server_screen(self, client: pgnet.BaseClient):
         client.on_connection = None
         self.menu.get_button("server").disabled = False
         self.main_frame.clear_widgets()
@@ -144,7 +144,7 @@ class App(kx.XApp):
         client.on_connection = lambda *args: self.show_server_screen(client)
         await client.async_connect()
 
-    def _on_client_status(self, client, status):
+    def _on_client_status(self, client: pgnet.BaseClient, status: str):
         if client is not self._client:
             logger.warning(f"Old client event.\n{client=}\n{self._client=}")
             return
