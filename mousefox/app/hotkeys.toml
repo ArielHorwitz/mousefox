@@ -2,17 +2,14 @@
 quit = "^+ q"
 restart = "^+ w"
 debug = "^+ d"
+disconnect = "^+ home"
 
 [connection]
 start = ["enter", "numpadenter"]
 
 [server]
-disconnect = "^+ delete"
+leave_game = "^ home"
 
 [server.lobby]
-disconnect = "escape"
 focus_create = "^ n"
 focus_list = "^ j"
-
-[server.game]
-leave = "escape"

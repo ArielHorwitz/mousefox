@@ -1,6 +1,6 @@
 """MouseFox GUI app."""
 
-from typing import Optional
+from typing import Optional, Literal
 from loguru import logger
 import asyncio
 import functools
@@ -51,6 +51,7 @@ class App(kx.XApp):
             log_callback=True,
         )
         self._register_controller(self.controller)
+        self._make_menu()
         self.connection_frame = ConnectionFrame(
             client_cls=client_cls,
             localhost_cls=localhost_cls,
@@ -71,26 +72,41 @@ class App(kx.XApp):
         controller.bind("quit", self.stop)
         controller.bind("restart", self.restart)
         controller.bind("debug", controller.debug)
+        controller.bind("disconnect", self._disconnect)
+
+    def _make_menu(self):
+        self.menu = kx.XButtonBar()
+        self.menu.set_size(x="500dp")
+        self.menu.add_category("app")
+        self.menu.add_category("server")
+        self.menu.add_button("app", "quit", self.stop)
+        self.menu.add_button("app", "restart", self.restart)
+        self.menu.add_button("server", "disconnect", self._disconnect)
 
     def make_widgets(self):
         self.root.clear_widgets()
         self.root.make_bg(kx.get_color("purple", v=0.05))
+        self._status = kx.XLabel(halign="left", italic=True, padding=(10, 0))
+        top_bar = kx.XBox()
+        top_bar.add_widgets(self.menu, self._status)
+        top_bar.set_size(y="32dp")
+        top_bar.make_bg(kx.get_color("purple", v=0.2))
         self.main_frame = kx.XAnchor()
-        self.status_bar = kx.XLabel(halign="left", italic=True, padding=(10, 0))
-        self.status_bar.set_size(y=40)
-        self.status_bar.make_bg(kx.get_color("purple", v=0.2))
         root_frame = kx.XBox(orientation="vertical")
-        root_frame.add_widgets(self.main_frame, self.status_bar)
+        root_frame.add_widgets(top_bar, self.main_frame)
         self.root.add_widget(root_frame)
         self.show_connection_screen()
 
     def show_connection_screen(self):
+        self.menu.get_button("server").disabled = True
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.connection_frame)
+        self.connection_frame.set_focus()
         self.controller.set("connection")
 
     def show_server_screen(self, client):
         client.on_connection = None
+        self.menu.get_button("server").disabled = False
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.server_frame)
         self.server_frame.set_client(client)
@@ -102,15 +118,17 @@ class App(kx.XApp):
     def set_feedback(
         self,
         text: str,
+        stype: Literal["normal", "warning"] = "normal",
         /,
-        *,
-        color: tuple[float, float, float] = (0.8, 0.8, 0.8),
     ):
-        self.status_bar.text = text
-        self.status_bar.color = (*color, 1)
-
-    def set_feedback_warning(self, *args, **kwargs):
-        self.set_feedback(*args, color=(1, 0.2, 0.2), **kwargs)
+        self._status.text = text
+        if stype == "normal":
+            color = 0.8, 0.8, 0.8
+        elif stype == "warning":
+            color = 1, 0.2, 0.2
+        else:
+            raise ValueError("Unknown status type.")
+        self._status.color = color
 
     def set_client(self, client: pgnet.BaseClient, /):
         asyncio.create_task(self._async_set_client(client))
@@ -128,10 +146,12 @@ class App(kx.XApp):
         if client is not self._client:
             logger.warning(f"Old client event.\n{client=}\n{self._client=}")
             return
-        if client.connected:
-            self.set_feedback(status)
-        else:
-            self.set_feedback_warning(status)
+        self.set_feedback(status, "normal" if client.connected else "warning")
+
+    def _disconnect(self, *args):
+        if self._client:
+            self._client.close()
+        self.show_connection_screen()
 
     async def async_run(self):
         r = await super().async_run()

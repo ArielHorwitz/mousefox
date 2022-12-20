@@ -17,7 +17,6 @@ class GameWidget(kx.XAnchor):
         self.client.on_game_state = self._on_game_state
         self._on_game_state(self.client.game_state)
         self.client.check_update()
-        self.app.controller.bind("server.game.leave", self.client.leave_game)
 
     def make_widgets(self):
         self.info_panel = kx.XLabel(halign="left", valign="top", padding=(10, 5))

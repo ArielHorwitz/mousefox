@@ -171,3 +171,6 @@ class ConnectionFrame(kx.XAnchor):
             self.connection_panel.set_showing(iname, online)
         for iname in ("port", "pubkey"):
             self.connection_panel.set_showing(iname, advanced)
+
+    def set_focus(self, *args):
+        self.connection_panel.set_focus("username")

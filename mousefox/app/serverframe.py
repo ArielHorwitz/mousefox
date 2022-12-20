@@ -18,32 +18,28 @@ class ServerFrame(kx.XAnchor):
         self._client: Optional[pgnet.BaseClient] = None
         self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.games_dir = dict()
-        self.make_bg(kx.get_color("orange", v=0.3))
-        self.main_frame = kx.XAnchor()
-        self.add_widget(self.main_frame)
-        self.make_widgets()
-        self.app.controller.bind("server.disconnect", self._disconnect)
-        self.app.controller.bind("server.lobby.disconnect", self._disconnect)
+        self.app.menu.add_button("server", "leave_game", self._leave_game)
+        self.app.controller.bind("server.leave_game", self._leave_game)
         self.app.controller.bind("server.lobby.focus_create", self._focus_create)
         self.app.controller.bind("server.lobby.focus_list", self._focus_list)
+        self.make_widgets()
 
-    def set_client(self, client: Optional[pgnet.BaseClient]):
+    def set_client(self, client: pgnet.BaseClient):
+        """Set the client to use for this widget."""
         if self._client:
             self._client.on_game = None
         self._client = client
-        if client:
-            client.on_game = self.on_game
+        client.on_game = self.on_game
+        self.on_game(client.game)
 
     def make_widgets(self):
-        # Title
+        self.main_frame = kx.XAnchor()
+        self.add_widget(self.main_frame)
+        self.make_bg(kx.get_color("orange", v=0.3))
+        # Game list
         title = kx.XLabel(text="[b]Server lobby[/b]", font_size=18)
-        disconnect_btn = kx.XButton(text="Disconnect", on_release=self._disconnect)
-        refresh_btn = kx.XButton(text="Refresh", on_release=self._refresh_games)
-        title_frame = kx.XBox()
-        title_frame.set_size(y=LINE_WIDGET_HEIGHT)
-        title_frame.add_widgets(disconnect_btn, title, refresh_btn)
-
-        # Games list
+        title.set_size(y=LINE_WIDGET_HEIGHT)
+        title.make_bg(kx.XColor(v=0, a=0.4))
         self.games_list = kx.XList(
             items=[""],
             selection_color=(1, 1, 1),
@@ -53,8 +49,10 @@ class ServerFrame(kx.XAnchor):
             on_invoke=self._on_game_invoke,
             selection=self._show_game,
         )
+        refresh_btn = kx.XButton(text="Refresh", on_release=self._refresh_games)
+        refresh_btn.set_size(y=LINE_WIDGET_HEIGHT)
         list_frame = kx.XBox(orientation="vertical")
-        list_frame.add_widgets(title_frame, self.games_list)
+        list_frame.add_widgets(title, self.games_list, refresh_btn)
 
         # Game info
         info_title = kx.XLabel(text="[b]Game Details[/b]")
@@ -108,12 +106,15 @@ class ServerFrame(kx.XAnchor):
         self.main_frame.add_widget(self.lobby_frame)
         self._refresh_games()
         self._show_game()
+        self.games_list.focus = True
+        self.app.menu.get_button("server", "leave_game").disabled = True
         self.app.controller.set("server.lobby")
 
     def make_game(self):
         self.main_frame.clear_widgets()
         game_frame = self._game_widget_class(self._client)
         self.main_frame.add_widget(game_frame)
+        self.app.menu.get_button("server", "leave_game").disabled = False
         self.app.controller.set("server.game")
 
     def update(self):
@@ -123,7 +124,7 @@ class ServerFrame(kx.XAnchor):
             self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
             self._refresh_games()
 
-    def on_game(self, game: str):
+    def on_game(self, game: Optional[str]):
         logger.info(f"New game: {game}")
         if game:
             self.make_game()
@@ -169,12 +170,9 @@ class ServerFrame(kx.XAnchor):
             password = self.join_panel.get_value("password")
         self._client.join_game(name, password)
 
-    def _disconnect(self, *args):
-        if not self._client:
-            return
-        self._client.close()
-        self.show_lobby()
-        self.app.show_connection_screen()
+    def _leave_game(self, *args):
+        if self._client:
+            self._client.leave_game()
 
     def _refresh_games(self, *args):
         if self._client:
