@@ -156,7 +156,7 @@ class ServerFrame(kx.XAnchor):
         values = self.create_panel.get_values()
         name = name or values["name"]
         password = password or values["password"] or None
-        self._client.create_game(name, password)
+        self._client.create_game(name, password, callback=self._feedback_response)
 
     def _join_game(self, *args, name: Optional[str] = None):
         if not self._client:
@@ -168,11 +168,11 @@ class ServerFrame(kx.XAnchor):
             return
         if game.get("password_protected"):
             password = self.join_panel.get_value("password")
-        self._client.join_game(name, password)
+        self._client.join_game(name, password, callback=self._feedback_response)
 
     def _leave_game(self, *args):
         if self._client:
-            self._client.leave_game()
+            self._client.leave_game(callback=self._feedback_response)
 
     def _refresh_games(self, *args):
         if self._client:
@@ -196,3 +196,12 @@ class ServerFrame(kx.XAnchor):
     @property
     def in_game(self):
         return self._client and self._client.game is not None
+
+    def _feedback_response(self, response: pgnet.Response):
+        if response.status == pgnet.STATUS_OK:
+            return
+        stypes = {
+            pgnet.STATUS_UNEXPECTED: "warning",
+            pgnet.STATUS_BAD: "error",
+        }
+        self.app.set_feedback(response.message, stypes[response.status])
