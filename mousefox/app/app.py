@@ -29,6 +29,8 @@ class App(kx.XApp):
         size: Optional[tuple[int, int]] = None,
         offset: Optional[tuple[int, int]] = None,
         title: str = "MouseFox",
+        info_text: str = "No info available.",
+        online_info_text: str = "No online info available.",
     ):
         super().__init__()
         self._client: Optional[pgnet.BaseClient] = None
@@ -53,6 +55,8 @@ class App(kx.XApp):
         self._register_controller(self.controller)
         self._make_menu()
         self.connection_frame = ConnectionFrame(
+            info_text,
+            online_info_text,
             client_cls=client_cls,
             localhost_cls=localhost_cls,
         )

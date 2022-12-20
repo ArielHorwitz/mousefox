@@ -45,6 +45,7 @@ async def run(
     localhost: Optional[Type[pgnet.LocalhostClient]] = None,
     get_game_widget: Optional[Callable] = None,
     allow_quit: bool = True,
+    **app_kwargs,
 ):
     """Run MouseFox.
 
@@ -61,6 +62,7 @@ async def run(
         get_game_widget: Function to get the Kivy widget. See `run_app`
             arguments. Required for the app.
         allow_quit: Allow this function to quit or restart the script.
+        app_kwargs: Keyword arguments for the GUI app.
     """
     args = _parse_script_args()
     logger.info("Starting MouseFox.")
@@ -97,6 +99,7 @@ async def run(
             borderless=args.borderless,
             size=args.size,
             offset=args.offset,
+            **app_kwargs,
         )
     await _close_remaining_tasks()
     if not allow_quit:

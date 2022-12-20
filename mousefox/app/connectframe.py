@@ -7,16 +7,6 @@ from .. import util
 
 
 LINE_HEIGHT = 40
-TITLE_TEXT = "[b][u]Welcome to MouseFox[/u][/b]"
-INFO_TEXT = (
-    "This online multiplayer game of tic-tac-toe is a builtin game example to"
-    " demo MouseFox."
-    "\n\n"
-    "[u]Connecting to a server[/u]"
-    "\n\n"
-    "To register (if the server allows it) simply choose a username and password"
-    " and log in."
-)
 CONFIG_FILE = util.get_appdata_dir() / "connection_config.txt"
 
 
@@ -48,6 +38,8 @@ class _ConnectionConfig:
 class ConnectionFrame(kx.XAnchor):
     def __init__(
         self,
+        info_text: str,
+        online_info_text: str,
         client_cls: Optional[Type[pgnet.BaseClient]] = None,
         localhost_cls: Optional[Type[pgnet.BaseClient]] = None,
         **kwargs,
@@ -57,24 +49,33 @@ class ConnectionFrame(kx.XAnchor):
             raise RuntimeError("Need at least one client class.")
         self._client_cls = client_cls
         self._localhost_cls = localhost_cls
-        self.make_widgets()
+        self.make_widgets(info_text, online_info_text)
         self.app.controller.bind("connection.start", self._invoke_play)
 
-    def make_widgets(self):
+    def make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
         config = _ConnectionConfig.load_from_disk()
         # Side panel
-        title_label = kx.XLabel(text=TITLE_TEXT)
-        title_label.set_size(y=LINE_HEIGHT * 2)
         info_label = kx.XLabel(
-            text=INFO_TEXT,
+            text=info_text,
             valign="top",
             halign="left",
             padding=(10, 10),
         )
+        online_info_label = kx.XLabel(
+            text=online_info_text,
+            valign="top",
+            halign="left",
+            padding=(10, 10),
+        )
+        self._online_info_label = kx.XCurtain(
+            content=online_info_label,
+            showing=config.online,
+        )
         left_frame = kx.XBox(orientation="vertical")
+        left_frame.add_widgets(info_label, self._online_info_label)
+        left_frame = kx.XAnchor.wrap(left_frame, x=1, y=0.9)
         left_frame.set_size(x=350)
-        left_frame.add_widgets(title_label, info_label)
         left_frame.make_bg(kx.get_color("cyan", v=0.3))
         # Connection details
         if not self._client_cls and config.online:
@@ -167,6 +168,7 @@ class ConnectionFrame(kx.XAnchor):
     def _on_connection_values(self, w, values: dict):
         online = values["online"]
         advanced = online and values["advanced"]
+        self._online_info_label.showing = online
         for iname in ("password", "address", "advanced"):
             self.connection_panel.set_showing(iname, online)
         for iname in ("port", "pubkey"):
