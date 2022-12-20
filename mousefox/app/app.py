@@ -118,13 +118,15 @@ class App(kx.XApp):
     def set_feedback(
         self,
         text: str,
-        stype: Literal["normal", "warning"] = "normal",
+        stype: Literal["normal", "warning", "error"] = "normal",
         /,
     ):
         self._status.text = text
         if stype == "normal":
             color = 0.8, 0.8, 0.8
         elif stype == "warning":
+            color = 1, 0.4, 0
+        elif stype == "error":
             color = 1, 0.2, 0.2
         else:
             raise ValueError("Unknown status type.")
@@ -146,7 +148,7 @@ class App(kx.XApp):
         if client is not self._client:
             logger.warning(f"Old client event.\n{client=}\n{self._client=}")
             return
-        self.set_feedback(status, "normal" if client.connected else "warning")
+        self.set_feedback(status, "normal" if client.connected else "error")
 
     def _disconnect(self, *args):
         if self._client:
