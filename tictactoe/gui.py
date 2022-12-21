@@ -6,6 +6,7 @@ from .client import Client
 
 
 LINE_WIDGET_HEIGHT = 45
+MARKS = "OX"
 
 
 class GameWidget(kx.XAnchor):
@@ -50,16 +51,25 @@ class GameWidget(kx.XAnchor):
         if state.get("your_turn"):
             info = f"[b]{state.get('info', '')}[/b]"
         self.info_panel.text = "\n".join([
-            f"[u]Game:[/u] [i]{self.client.game}[/i]\n",
+            "\n",
             info,
             "\n",
-            f"[u]Players:[/u] {', '.join(players)}",
+            f"[u]Game:[/u] [i]{self.client.game}[/i]",
+            "\n",
+            "[u]Players:[/u]",
+            *(f" ( [b]{MARKS[i]}[/b] ) {p}" for i, p in enumerate(players)),
+            "\n",
             "[u]Spectators:[/u]",
-            *(f" -- {s}" for s in spectators),
+            *(f" • {s}" for s in spectators),
         ])
+        winning_line = state.get("winning_line") or tuple()
         marks = tuple(str(s or "_") for s in state.get("board", [None] * 9))
-        for square_btn, mark in zip(self.board, marks):
+        for i, (square_btn, mark) in enumerate(zip(self.board, marks)):
             square_btn.text = mark
+            winning = i in winning_line
+            square_btn.bold = winning
+            square_btn.color = (1, 0.2, 0.2) if winning else (1, 1, 1)
+            square_btn.background_color = (0, 0.1, 0.3) if winning else (0, 0.3, 0.1)
         self.single_player_btn.disabled = len(state.get("players", "--")) >= 2
 
     def _play_square(self, index: int, /):

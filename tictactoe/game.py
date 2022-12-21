@@ -94,22 +94,24 @@ class Game(BaseGame):
             return ""
         return self.players[int(self.x_turn)]
 
-    @staticmethod
-    def _winning_mark(board: list[str]) -> Optional[str]:
+    def _winning_line(
+        self,
+        board: Optional[list[str]] = None,
+    ) -> Optional[tuple[int, int, int]]:
+        if board is None:
+            board = self.board
         for a, b, c in WINNING_LINES:
             mark = board[a]
             if mark and mark == board[b] == board[c]:
-                return mark
+                return a, b, c
         return None
 
     def _check_progress(self):
-        winning_mark = self._winning_mark(self.board)
-        if winning_mark:
+        winning_line = self._winning_line()
+        if winning_line:
+            mark = self.board[winning_line[0]]
             self.in_progress = False
-            self.outcome = (
-                f"{self._mark_to_username(winning_mark)}"
-                f" playing as {winning_mark} wins!"
-            )
+            self.outcome = (f"{self._mark_to_username(mark)} playing as {mark} wins!")
             return
         if all(self.board):
             self.in_progress = False
@@ -137,14 +139,14 @@ class Game(BaseGame):
         for s in empty_squares:
             new_board = copy.copy(self.board)
             new_board[s] = my_mark
-            if self._winning_mark(new_board):
+            if self._winning_line(new_board):
                 self._do_play_square(s, my_mark)
                 return
         # Find losing threats
         for s in empty_squares:
             new_board = copy.copy(self.board)
             new_board[s] = enemy_mark
-            if self._winning_mark(new_board):
+            if self._winning_line(new_board):
                 break
         self._do_play_square(s, my_mark)
 
@@ -161,6 +163,7 @@ class Game(BaseGame):
             board=self.board,
             your_turn=packet.username == self._current_username,
             info=self._get_user_info(packet.username),
+            winning_line=self._winning_line(),
         )
         return Response("Updated state.", payload)
 
