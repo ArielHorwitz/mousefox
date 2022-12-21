@@ -6,6 +6,7 @@ Usage: mousefox [-h | --help] [options]
 
 Options:
   -h, --help                  Show this help and quit
+  --debug-args                Show parsed arguments
 
 GUI Options:
   -u, --unmaximize            Do not maximize the window automatically
@@ -18,7 +19,7 @@ Server Options:
   -p, --admin-password <password>
                               Server admin password
   --port <port>               Listen on port number
-  --save-file                 Set the location of the server save file
+  --save-file <file>          Set the location of the server save file
   --delete-save-file          Delete the server save file and quit
 
 Dev Options:
@@ -35,7 +36,7 @@ import pathlib
 import pgnet
 import pgnet.devclient
 from loguru import logger
-from . import util
+from .util import SERVER_SAVE_FILE
 
 
 async def run(
@@ -165,11 +166,18 @@ def run_app(get_game_widget: Callable, **app_kwargs):
 def _parse_script_args() -> dict:
     """Parse arguments from command line based on module docstring."""
     args: dict = docopt.docopt(__doc__)
+    if args.debug_args:
+        print(f"Raw arguments: {sys.argv}")
     args.size = _parse_2dvector(args.size)
     args.offset = _parse_2dvector(args.offset)
     args.maximize = not args.unmaximize
     args.port = int(args.port or pgnet.DEFAULT_PORT)
-    args.save_file = pathlib.Path(args.save_file or util.SERVER_SAVE_FILE)
+    if args.save_file:
+        args.save_file = pathlib.Path(args.save_file)
+    else:
+        args.save_file = SERVER_SAVE_FILE
+    if args.debug_args:
+        print(f"Parsed arguments: {args}")
     return args
 
 
