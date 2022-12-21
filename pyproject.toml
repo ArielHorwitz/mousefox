@@ -32,3 +32,8 @@ dependencies = [
 include = [
   "mousefox*",
 ]
+
+[tool.setuptools.package-data]
+mousefox = [
+  "app/hotkeys.toml",
+]
