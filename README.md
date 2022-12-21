@@ -1,6 +1,6 @@
 # MouseFox
 
-A framework for multiplayer Python games using [Kvex](
+MouseFox is a framework for multiplayer Python games using [Kvex](
 https://github.com/ArielHorwitz/kvex) and [pgnet](
 https://github.com/ArielHorwitz/pgnet).
 
