@@ -36,6 +36,7 @@ class ServerFrame(kx.XAnchor):
         self.main_frame = kx.XAnchor()
         self.add_widget(self.main_frame)
         self.make_bg(kx.get_color("orange", v=0.3))
+        self._dummy_focus = _DummyFocus()  # For unassigning focus when not visible
         # Game list
         title = kx.XLabel(text="[b]Server lobby[/b]", font_size=18)
         title.set_size(y=LINE_WIDGET_HEIGHT)
@@ -110,6 +111,7 @@ class ServerFrame(kx.XAnchor):
 
     def make_game(self):
         self.main_frame.clear_widgets()
+        self._dummy_focus.focus = True  # Avoid widget interaction when not visible
         game_frame = self._game_widget_class(self._client)
         self.main_frame.add_widget(game_frame)
         self.app.menu.get_button("server", "leave_game").disabled = False
@@ -203,3 +205,7 @@ class ServerFrame(kx.XAnchor):
             pgnet.STATUS_BAD: "error",
         }
         self.app.set_feedback(response.message, stypes[response.status])
+
+
+class _DummyFocus(kx.XFocusBehavior, kx.XLabel):
+    pass
