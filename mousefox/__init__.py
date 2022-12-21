@@ -87,11 +87,13 @@ async def run(
             save_file=args.save_file,
         )
     else:
-        wrapped_localhost = functools.partial(
-            localhost,
-            game=game,
-            server_kwargs=dict(save_file=args.save_file),
-        )
+        wrapped_localhost = None
+        if localhost:
+            wrapped_localhost = functools.partial(
+                localhost,
+                game=game,
+                server_kwargs=dict(save_file=args.save_file),
+            )
         exit_code = await run_app(
             get_game_widget=get_game_widget,
             client_cls=client,
