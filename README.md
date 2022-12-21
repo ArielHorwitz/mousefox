@@ -11,8 +11,8 @@ pip install git+ssh://git@github.com/ArielHorwitz/mousefox.git
 ```
 
 For now, the best way to get started is to copy the built-in [tictactoe](
-https://github.com/ArielHorwitz/mousefox/tictactoe) example into your project
-and modify from there.
+https://github.com/ArielHorwitz/mousefox/tree/master/tictactoe) example into
+your project and modify from there.
 
 Create a script entry point:
 ```python
