@@ -163,6 +163,7 @@ class Game(BaseGame):
             board=self.board,
             your_turn=packet.username == self._current_username,
             info=self._get_user_info(packet.username),
+            in_progress=self.in_progress,
             winning_line=self._winning_line(),
         )
         return Response("Updated state.", payload)
