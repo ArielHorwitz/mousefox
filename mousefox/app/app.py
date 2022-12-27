@@ -31,6 +31,7 @@ class App(kx.XApp):
         title: str = "MouseFox",
         info_text: str = "No info available.",
         online_info_text: str = "No online info available.",
+        auto_connect_local: bool = False,
     ):
         super().__init__()
         self._client: Optional[pgnet.BaseClient] = None
@@ -64,6 +65,9 @@ class App(kx.XApp):
         self.make_widgets()
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
+        if auto_connect_local:
+            lhclient = localhost_cls(username="localhost_player")
+            kx.schedule_once(lambda *a: self.set_client(lhclient))
 
     def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)
