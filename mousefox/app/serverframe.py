@@ -120,7 +120,7 @@ class ServerFrame(kx.XAnchor):
     def update(self):
         if not self._client or not self._client.connected:
             return
-        if arrow.now() > self._next_dir_refresh:
+        if self.lobby_frame.parent and arrow.now() > self._next_dir_refresh:
             self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
             self._refresh_games()
 
