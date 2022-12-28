@@ -35,7 +35,6 @@ class ServerFrame(kx.XAnchor):
     def make_widgets(self):
         self.main_frame = kx.XAnchor()
         self.add_widget(self.main_frame)
-        self.make_bg(kx.get_color("orange", v=0.3))
         self._dummy_focus = _DummyFocus()  # For unassigning focus when not visible
         # Game list
         title = kx.XLabel(text="[b]Server lobby[/b]", font_size=18)
@@ -97,6 +96,7 @@ class ServerFrame(kx.XAnchor):
         right_frame = kx.XBox(orientation="vertical")
         right_frame.add_widgets(info_panel, create_frame)
         self.lobby_frame = kx.XBox()
+        self.lobby_frame.make_bg(kx.get_color("orange", v=0.3))
         self.lobby_frame.add_widgets(list_frame, right_frame)
         self.show_lobby()
 
