@@ -53,6 +53,12 @@ class App(kx.XApp):
             log_bind=True,
             log_callback=True,
         )
+        self.game_controller = kx.XHotkeyController(
+            logger=logger.debug,
+            log_register=True,
+            log_bind=True,
+            log_callback=True,
+        )
         self._register_controller(self.controller)
         self._make_menu()
         self.connection_frame = ConnectionFrame(
