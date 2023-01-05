@@ -28,6 +28,11 @@ dependencies = [
   "kvex @ git+https://git@github.com/ArielHorwitz/kvex.git@v0.1.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pdoc>=12.3.0,<13.0",
+]
+
 [tool.setuptools.packages.find]
 include = [
   "mousefox*",
