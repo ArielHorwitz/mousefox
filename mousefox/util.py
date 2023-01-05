@@ -20,6 +20,7 @@ def file_load(file: os.PathLike) -> str:
 
 def file_dump(file: os.PathLike, d: str, clear: bool = True):
     """Saves the string *d* to *file*.
+
     Will overwrite the file if *clear* is True, otherwise will append to it.
     """
     with open(file, "w" if clear else "a", encoding="utf-8") as f:
@@ -27,7 +28,7 @@ def file_dump(file: os.PathLike, d: str, clear: bool = True):
 
 
 def get_appdata_dir() -> Path:
-    """Return path to the user's app data folder.
+    r"""Return path to the user's app data folder.
 
     - Windows: `~\\AppData\\Local\\mousefox`
     - Mac OS: `~/Library/Local/mousefox`
@@ -42,6 +43,3 @@ def get_appdata_dir() -> Path:
     path = Path.home().joinpath(*parts) / "mousefox"
     path.mkdir(parents=True, exist_ok=True)
     return path
-
-
-SERVER_SAVE_FILE: Path = get_appdata_dir() / "server-data.json"

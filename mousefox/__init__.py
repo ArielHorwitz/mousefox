@@ -1,111 +1,97 @@
-"""MouseFox
+""".. include:: ../README.md
 
-Usage: mousefox [-h | --help] [options]
-       mousefox server [--p <password>] [options]
-       mousefox dev [options]
+## Getting started
+To work with MouseFox, you should be a little familiar with
+[pgnet](https://github.com/ArielHorwitz/pgnet) and [kivy](https://kivy.org/doc/stable/).
+Let's walk through making a simple multiplayer clicker game.
 
-Options:
-  -h, --help                  Show this help and quit
-  --debug-args                Show parsed arguments
+### Game logic
+We require a pgnet `Game` class. This class will be initialized with the game name
+whenever a user creates a new game by the server:
+```python3
+import pgnet
 
-GUI Options:
-  -u, --unmaximize            Do not maximize the window automatically
-  -b, --borderless            Remove window border
-  --size <size>               Window size in pixels (e.g. `800x600`)
-  --offset <offset>           Window offset in pixels (e.g. `200x50`)
+class ClickerGame(pgnet.Game):
+    clicks = 0
 
-Server Options:
-  -g, --listen-globally       Listen globally instead of localhost only
-  -p, --admin-password <password>
-                              Server admin password
-  --port <port>               Listen on port number
-  --save-file <file>          Set the location of the server save file
-  --delete-save-file          Delete the server save file and quit
+    def handle_heartbeat(self, packet: pgnet.Packet) -> pgnet.Response:
+        # Return game updates
+        message = f"Number of clicks: {self.clicks}"
+        return pgnet.Response(message)
 
-Dev Options:
-  -r, --remote                Connect to a remote server
-"""
+    def handle_game_packet(self, packet: pgnet.Packet) -> pgnet.Response:
+        # Handle requests and actions
+        self.clicks += 1
+        return pgnet.Response("Clicked.")
+```
 
-from typing import Optional, Type, Callable
+### Game widget
+We require a kivy `Widget` class. This class will be initialized with the pgnet client
+whenever the user joins a game by the GUI.
+```python3
+from kivy.uix.label import Label
+import pgnet
+
+class ClickerWidget(Label):
+    def __init__(self, client: pgnet.Client):
+        # Init the kivy widget and bind to client heartbeat
+        super().__init__(text="Waiting for data from server...")
+        self.client = client
+        self.client.on_heartbeat = self.on_heartbeat
+
+    def on_heartbeat(self, heartbeat: pgnet.Response):
+        # Use heartbeat to get game updates
+        self.text = heartbeat.message
+
+    def on_touch_down(self, touch):
+        # Use client to send requests and do actions
+        if self.collide_point(*touch.pos):
+            self.client.send(pgnet.Packet("Click"))
+```
+
+### Running the app
+We can now call `mousefox.run` to run the app:
+```python3
+import mousefox
+
+mousefox.run(
+    game_widget=ClickerWidget,
+    game_class=ClickerGame,
+)
+```
+
+Check out the
+[examples](https://github.com/ArielHorwitz/mousefox/tree/master/mousefox/examples/)
+source code to see more examples.
+"""  # noqa: D415
+
+
 import os
 import sys
 import asyncio
-import docopt
-import functools
-import pathlib
-import pgnet
-import pgnet.devclient
 from loguru import logger
-from .util import SERVER_SAVE_FILE
+from .app.app import App, AppConfig
+from . import examples
 
 
-async def run(
-    *,
-    game: Optional[Type[pgnet.BaseGame]] = None,
-    client: Optional[Type[pgnet.BaseClient]] = None,
-    localhost: Optional[Type[pgnet.LocalhostClient]] = None,
-    get_game_widget: Optional[Callable] = None,
-    allow_quit: bool = True,
-    **app_kwargs,
-):
-    """Run MouseFox.
+def run(**kwargs):
+    """Run the app. Takes arguments like `mousefox.AppConfig`.
 
-    Parses arguments passed to the script to determine mode and configuration.
-    See module documentation for details, or run with command line argument
-    "--help".
-
-    Args:
-        game: Game to use. Required for the server and localhost.
-        client: Client class to use. One of client or localhost_client are
-            required for the app.
-        localhost_client: LocalhostClient class to use. One of client or
-            localhost_client are required for the app.
-        get_game_widget: Function to get the Kivy widget. See `run_app`
-            arguments. Required for the app.
-        allow_quit: Allow this function to quit or restart the script.
-        app_kwargs: Keyword arguments for the GUI app.
+    See also: `async_run`.
     """
-    args = _parse_script_args()
+    asyncio.run(async_run(**kwargs))
+
+
+async def async_run(**kwargs):
+    """Coroutine to run the app. Takes arguments like `mousefox.AppConfig`.
+
+    See also: `run`.
+    """
     logger.info("Starting MouseFox.")
-    # Resolve task to run
-    if args.delete_save_file:
-        exit_code = 0
-        if args.save_file.is_file():
-            args.save_file.unlink()
-            logger.info(f"Deleted server save file: {args.save_file!r}")
-        else:
-            logger.info(f"No server save file to delete: {args.save_file!r}")
-    elif args.dev:
-        dev_game = None if args.remote else game
-        exit_code = await run_devclient(dev_game, save_file=args.save_file)
-    elif args.server:
-        exit_code = await run_server(
-            game,
-            listen_globally=args.listen_globally,
-            port=args.port,
-            admin_password=args.admin_password,
-            save_file=args.save_file,
-        )
-    else:
-        wrapped_localhost = None
-        if localhost:
-            wrapped_localhost = functools.partial(
-                localhost,
-                game=game,
-                server_kwargs=dict(save_file=args.save_file),
-            )
-        exit_code = await run_app(
-            get_game_widget=get_game_widget,
-            client_cls=client,
-            localhost_cls=wrapped_localhost,
-            maximize=args.maximize,
-            borderless=args.borderless,
-            size=args.size,
-            offset=args.offset,
-            **app_kwargs,
-        )
-    await _close_remaining_tasks()
-    if not allow_quit:
+    config = AppConfig(**kwargs)
+    app = App(config)
+    exit_code = await app.async_run()
+    if not config.allow_quit:
         return
     # Restart if exit code is -1
     if exit_code == -1:
@@ -115,99 +101,9 @@ async def run(
     quit()
 
 
-async def run_devclient(game: Optional[Type[pgnet.BaseGame]] = None, **server_kwargs):
-    """Run the devclient.
-
-    By default will run a remote client, unless `game` is passed. If a game
-    class is passed will run a localhost client, and will pass keyword arguments
-    from `server_kwargs` to the localhost server.
-    """
-    remote = game is None
-    return await pgnet.devclient.async_run(
-        remote=remote,
-        game=game,
-        server_kwargs=server_kwargs,
-    )
-
-
-def run_server(game: Type[pgnet.BaseGame], **server_kwargs):
-    """Run the server.
-
-    Args:
-        game: Game class to pass to server.
-        server_kwargs: Remaining keyword arguments for the `pgnet.BaseServer`
-            instance.
-    """
-    server = pgnet.BaseServer(game, **server_kwargs)
-    return server.async_run()
-
-
-def run_app(get_game_widget: Callable, **app_kwargs):
-    """Run the GUI client app.
-
-    Args:
-        get_game_widget: Function that returns the Kivy game widget. The reason
-            for calling a function is to import Kivy as late as possible
-            because of it's behavior when imported.
-        app_kwargs: Remaining keyword arguments for the `mousefox.app.App` instance.
-    """
-    # Late imports because of Kivy's behavior when imported
-    from .app.app import App
-    import kvex
-
-    game_widget = get_game_widget()
-    if not issubclass(game_widget, kvex.kivy.Widget):
-        raise ValueError(
-            f"get_game_widget must return a {kvex.kivy.Widget},"
-            f" instead got: {game_widget}"
-        )
-    app = App(game_widget=game_widget, **app_kwargs)
-    return app.async_run()
-
-
-def _parse_script_args() -> dict:
-    """Parse arguments from command line based on module docstring."""
-    args: dict = docopt.docopt(__doc__)
-    if args.debug_args:
-        print(f"Raw arguments: {sys.argv}")
-    args.size = _parse_2dvector(args.size)
-    args.offset = _parse_2dvector(args.offset)
-    args.maximize = not args.unmaximize
-    args.port = int(args.port or pgnet.DEFAULT_PORT)
-    if args.save_file:
-        args.save_file = pathlib.Path(args.save_file)
-    else:
-        args.save_file = SERVER_SAVE_FILE
-    if args.debug_args:
-        print(f"Parsed arguments: {args}")
-    return args
-
-
-def _parse_2dvector(s: Optional[str]) -> Optional[tuple[int, int]]:
-    return None if not s else tuple(int(coord) for coord in s.split("x", 1))
-
-
-async def _close_remaining_tasks(debug: bool = True):
-    remaining_tasks = asyncio.all_tasks() - {asyncio.current_task(), }
-    if not remaining_tasks:
-        return
-    for t in remaining_tasks:
-        t.cancel()
-    if debug:
-        logger.debug(
-            f"Remaining {len(remaining_tasks)} tasks:\n"
-            + "\n".join(f"  -- {t}" for t in remaining_tasks)
-        )
-    for coro in asyncio.as_completed(list(remaining_tasks)):
-        try:
-            await coro
-        except asyncio.CancelledError:
-            removed_tasks = remaining_tasks - asyncio.all_tasks()
-            remaining_tasks -= removed_tasks
-            if removed_tasks and not debug:
-                logger.debug(f"Removed {len(removed_tasks)} tasks: {removed_tasks}")
-                logger.debug(
-                    f"Remaining {len(remaining_tasks)} tasks:\n"
-                    + "\n".join(f"  -- {t}" for t in remaining_tasks)
-                )
-            continue
+__all__ = (
+    "run",
+    "async_run",
+    "AppConfig",
+    "examples",
+)

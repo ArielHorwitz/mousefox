@@ -1,8 +1,9 @@
 """MouseFox GUI app."""
 
-from typing import Optional, Literal, Type
+from typing import Optional, Literal, Type, Callable
 from loguru import logger
 import asyncio
+from dataclasses import dataclass
 import functools
 import pathlib
 import kvex as kx
@@ -17,36 +18,72 @@ HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
 MINIMUM_SIZE = (1024, 768)
 
 
+@dataclass
+class AppConfig:
+    """Configuration for MouseFox app."""
+
+    game_widget: kvex.kivy.Widget
+    """Kivy widget for the game."""
+    game_class: Type[pgnet.Game]
+    """Game subclass for the local client and server (see `pgnet.Server`)."""
+    client_class: Type[pgnet.Client] = pgnet.Client
+    """Client subclass for the client (see `pgnet.Client`)."""
+    server_factory: Optional[Callable] = None
+    """The server factory for the local client (see `pgnet.Client.local`)."""
+    disable_local: bool = False
+    """Disable local clients."""
+    disable_remote: bool = False
+    """Disable remote clients."""
+    maximize: bool = False
+    """If app should start maximized."""
+    borderless: bool = False
+    """If app should not have window borders."""
+    size: Optional[tuple[int, int]] = None
+    """App window size in pixels."""
+    offset: Optional[tuple[int, int]] = None
+    """App window offset in pixels."""
+    title: str = "MouseFox"
+    """App window title."""
+    info_text: str = "No info available."
+    """Text to show when ready to connect."""
+    online_info_text: str = "No online info available."
+    """Text to show when ready to connect remotely."""
+    allow_quit: bool = True
+    """Allow MouseFox to quit or restart the script."""
+
+    def __getitem__(self, item):
+        """Get item."""
+        return getattr(self, item)
+
+    def keys(self):
+        """Enables mapping.
+
+        For example:
+        ```python3
+        config = mousefox.AppConfig(...)
+        mousefox.run(**config)
+        ```
+        """
+        return self.__dataclass_fields__.keys()
+
+
 class App(kx.XApp):
-    def __init__(
-        self,
-        *,
-        game_widget: kvex.kivy.Widget,
-        client_cls: Optional[Type[pgnet.BaseClient]] = None,
-        localhost_cls: Optional[Type[pgnet.BaseClient]] = None,
-        maximize: bool = True,
-        borderless: bool = False,
-        size: Optional[tuple[int, int]] = None,
-        offset: Optional[tuple[int, int]] = None,
-        title: str = "MouseFox",
-        info_text: str = "No info available.",
-        online_info_text: str = "No online info available.",
-        auto_connect_local: bool = False,
-    ):
+    def __init__(self, app_config: AppConfig, /):
         super().__init__()
-        self._client: Optional[pgnet.BaseClient] = None
-        if borderless:
+        self._client: Optional[pgnet.Client] = None
+        if app_config.borderless:
             self.toggle_borderless(True)
-        if size:
-            size = tuple(max(c) for c in zip(MINIMUM_SIZE, size))
+        if app_config.size:
+            size = tuple(max(c) for c in zip(MINIMUM_SIZE, app_config.size))
             self.set_size(*size)
         else:
             self.set_size(*MINIMUM_SIZE)
-        if offset:
-            kx.schedule_once(lambda *a: self.set_position(*offset))
-        if maximize:
+        if app_config.offset:
+            kx.schedule_once(lambda *a: self.set_position(*app_config.offset))
+        if app_config.maximize:
             kx.schedule_once(lambda *a: self.maximize())
-        self.title = title
+        self.title = app_config.title
+        """App title."""
         self.controller = kx.XHotkeyController(
             logger=logger.debug,
             log_register=True,
@@ -61,19 +98,11 @@ class App(kx.XApp):
         )
         self._register_controller(self.controller)
         self._make_menu()
-        self.connection_frame = ConnectionFrame(
-            info_text,
-            online_info_text,
-            client_cls=client_cls,
-            localhost_cls=localhost_cls,
-        )
-        self.server_frame = ServerFrame(game_widget)
+        self.connection_frame = ConnectionFrame(app_config)
+        self.server_frame = ServerFrame(app_config.game_widget)
         self.make_widgets()
         self.hook(self.update, 20)
         self.set_feedback("Welcome")
-        if auto_connect_local:
-            lhclient = localhost_cls(username="localhost_player")
-            kx.schedule_once(lambda *a: self.set_client(lhclient))
 
     def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)
@@ -118,7 +147,7 @@ class App(kx.XApp):
         self.connection_frame.set_focus()
         self.controller.set_active("connection")
 
-    def show_server_screen(self, client: pgnet.BaseClient):
+    def show_server_screen(self, client: pgnet.Client):
         client.on_connection = None
         self.menu.get_button("server").disabled = False
         self.main_frame.clear_widgets()
@@ -146,19 +175,19 @@ class App(kx.XApp):
             raise ValueError("Unknown status type.")
         self._status.color = color
 
-    def set_client(self, client: pgnet.BaseClient, /):
+    def set_client(self, client: pgnet.Client, /):
         asyncio.create_task(self._async_set_client(client))
 
-    async def _async_set_client(self, client: pgnet.BaseClient, /):
+    async def _async_set_client(self, client: pgnet.Client, /):
         if self._client:
-            self._client.close()
+            self._client.disconnect()
         self._client = client
         client.on_status = functools.partial(self._on_client_status, client)
         self.set_feedback(client.status)
         client.on_connection = lambda *args: self.show_server_screen(client)
         await client.async_connect()
 
-    def _on_client_status(self, client: pgnet.BaseClient, status: str):
+    def _on_client_status(self, client: pgnet.Client, status: str):
         if client is not self._client:
             logger.warning(f"Old client event.\n{client=}\n{self._client=}")
             return
@@ -166,13 +195,14 @@ class App(kx.XApp):
 
     def _disconnect(self, *args):
         if self._client:
-            self._client.close()
+            self._client.disconnect()
         self.show_connection_screen()
 
     async def async_run(self):
         r = await super().async_run()
         if self._client:
-            self._client.close()
+            self._client.disconnect()
+        await _close_remaining_tasks()
         return r
 
 
@@ -184,3 +214,29 @@ def _flatten_hotkey_paths(nested: dict, prefix: str = "") -> dict:
         else:
             new_dict[f"{prefix}{k}"] = v
     return new_dict
+
+
+async def _close_remaining_tasks(debug: bool = True):
+    remaining_tasks = asyncio.all_tasks() - {asyncio.current_task(), }
+    if not remaining_tasks:
+        return
+    for t in remaining_tasks:
+        t.cancel()
+    if debug:
+        logger.debug(
+            f"Remaining {len(remaining_tasks)} tasks:\n"
+            + "\n".join(f"  -- {t}" for t in remaining_tasks)
+        )
+    for coro in asyncio.as_completed(list(remaining_tasks)):
+        try:
+            await coro
+        except asyncio.CancelledError:
+            removed_tasks = remaining_tasks - asyncio.all_tasks()
+            remaining_tasks -= removed_tasks
+            if removed_tasks and not debug:
+                logger.debug(f"Removed {len(removed_tasks)} tasks: {removed_tasks}")
+                logger.debug(
+                    f"Remaining {len(remaining_tasks)} tasks:\n"
+                    + "\n".join(f"  -- {t}" for t in remaining_tasks)
+                )
+            continue

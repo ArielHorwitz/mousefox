@@ -1,8 +1,6 @@
 
-from typing import Optional, Type
 from dataclasses import dataclass
 import kvex as kx
-import pgnet
 from .. import util
 
 
@@ -36,25 +34,25 @@ class _ConnectionConfig:
 
 
 class ConnectionFrame(kx.XAnchor):
-    def __init__(
-        self,
-        info_text: str,
-        online_info_text: str,
-        client_cls: Optional[Type[pgnet.BaseClient]] = None,
-        localhost_cls: Optional[Type[pgnet.BaseClient]] = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if not any((client_cls, localhost_cls)):
-            raise RuntimeError("Need at least one client class.")
-        self._client_cls = client_cls
-        self._localhost_cls = localhost_cls
-        self.make_widgets(info_text, online_info_text)
-        self.app.controller.bind("connection.start", self._invoke_play)
+    def __init__(self, app_config):
+        super().__init__()
+        if app_config.disable_local and app_config.disable_remote:
+            raise ValueError("Cannot disable both local and remote clients.")
+        self._client_class = app_config.client_class
+        self._game_class = app_config.game_class
+        self._server_factory = app_config.server_factory
+        self._enable_local = not app_config.disable_local
+        self._enable_remote = not app_config.disable_remote
+        self.make_widgets(app_config.info_text, app_config.online_info_text)
+        self.app.controller.bind("connection.start", self._connect)
 
     def make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
         config = _ConnectionConfig.load_from_disk()
+        if not self._enable_remote and config.online:
+            config.online = False
+        elif not self._enable_local and not config.online:
+            config.online = True
         # Side panel
         info_label = kx.XLabel(
             text=info_text,
@@ -78,10 +76,6 @@ class ConnectionFrame(kx.XAnchor):
         left_frame.set_size(x=350)
         left_frame.make_bg(kx.get_color("cyan", v=0.3))
         # Connection details
-        if not self._client_cls and config.online:
-            config.online = False
-        elif not self._localhost_cls and not config.online:
-            config.online = True
         pwidgets = dict(
             online=kx.XInputPanelWidget(
                 "Online",
@@ -89,7 +83,7 @@ class ConnectionFrame(kx.XAnchor):
                 default=config.online,
                 bold=True,
                 italic=False,
-                showing=all((self._client_cls, self._localhost_cls)),
+                showing=self._enable_local and self._enable_remote,
             ),
             username=kx.XInputPanelWidget("Username", default=config.username),
             password=kx.XInputPanelWidget(
@@ -127,7 +121,7 @@ class ConnectionFrame(kx.XAnchor):
             invoke_text="Connect",
         )
         self.connection_panel.bind(
-            on_invoke=self._invoke_play,
+            on_invoke=self._connect,
             on_values=self._on_connection_values,
         )
         self.connection_panel.set_focus("username")
@@ -141,7 +135,7 @@ class ConnectionFrame(kx.XAnchor):
         main_frame.make_bg(kx.get_color("pink", v=0.3))
         self.add_widget(main_frame)
 
-    def _invoke_play(self, *args):
+    def _connect(self, *args):
         get_value = self.connection_panel.get_value
         online = get_value("online")
         advanced = online and get_value("advanced")
@@ -152,7 +146,7 @@ class ConnectionFrame(kx.XAnchor):
         port = get_value("port") if advanced else _ConnectionConfig.port
         pubkey = get_value("pubkey") if advanced else _ConnectionConfig.pubkey
         if online:
-            client = self._client_cls(
+            client = self._client_class.remote(
                 address=address,
                 port=port,
                 username=username,
@@ -160,7 +154,11 @@ class ConnectionFrame(kx.XAnchor):
                 verify_server_pubkey=pubkey or None,
             )
         else:
-            client = self._localhost_cls(username=username)
+            client = self._client_class.local(
+                username=username,
+                game=self._game_class,
+                server_factory=self._server_factory,
+            )
         self.app.set_client(client)
         config = _ConnectionConfig(online, username, address, port, pubkey)
         config.save_to_disk()

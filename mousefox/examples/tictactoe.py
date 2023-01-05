@@ -1,11 +1,16 @@
-"""Tic-tac-toe game logic."""
+"""Example Tic-tac-toe game for MouseFox.
+
+Provides `APP_CONFIG` dictionary to pass keyword arguments for `mousefox.run`.
+"""
 
 from typing import Optional
 import arrow
 import copy
 import json
 import random
-from pgnet import BaseGame, Packet, Response, STATUS_UNEXPECTED
+import pgnet
+from pgnet import Packet, Response, Status
+import kvex as kx
 
 
 WINNING_LINES = [
@@ -28,8 +33,11 @@ BOT_NAME = "Tictactoe Bot"
 BOT_THINK_TIME = 1
 
 
-class Game(BaseGame):
+class Game(pgnet.Game):
+    """Tic-tac-toe game logic."""
+
     def __init__(self, *args, save_string: Optional[str] = None, **kwargs):
+        """Override base method."""
         super().__init__(*args, **kwargs)
         data = json.loads(save_string or json.dumps(BLANK_DATA))
         self._next_bot_turn = arrow.now()
@@ -41,16 +49,17 @@ class Game(BaseGame):
             self.outcome = "In progress."
         self.in_progress: bool = data["in_progress"]
         self.commands = dict(
-            check_update=self.check_update,
-            play_square=self.play_square,
-            single_player=self.set_single_player,
+            single_player=self._set_single_player,
+            play_square=self._play_square,
         )
 
     @property
     def persistent(self):
+        """Override base property."""
         return self.in_progress and any(self.board) and BOT_NAME not in self.players
 
     def get_save_string(self) -> str:
+        """Override base method."""
         data = dict(
             board=self.board,
             players=self.players,
@@ -60,6 +69,7 @@ class Game(BaseGame):
         return json.dumps(data)
 
     def user_joined(self, player: str):
+        """Override base method."""
         if player not in self.players:
             self.players.append(player)
         if len(self.players) == 2:
@@ -68,10 +78,12 @@ class Game(BaseGame):
             self.outcome = "In progress."
 
     def user_left(self, player: str):
+        """Override base method."""
         if player in self.players[2:]:
             self.players.remove(player)
 
-    def handle_packet(self, packet: Packet) -> Response:
+    def handle_game_packet(self, packet: Packet) -> Response:
+        """Override base method."""
         meth = self.commands.get(packet.message)
         if not meth:
             return Response("No such command.")
@@ -125,7 +137,8 @@ class Game(BaseGame):
         assert username in self.players[:2]
         return "O" if username == self.players[0] else "X"
 
-    def _handle_bot(self):
+    def update(self):
+        """Override base method."""
         if self._current_username != BOT_NAME:
             return
         if arrow.now() <= self._next_bot_turn:
@@ -151,8 +164,8 @@ class Game(BaseGame):
         self._do_play_square(s, my_mark)
 
     # Commands
-    def check_update(self, packet: Packet) -> Response:
-        self._handle_bot()
+    def handle_heartbeat(self, packet: Packet) -> Response:
+        """Override base method."""
         state_hash = self._state_hash
         client_hash = packet.payload.get("state_hash")
         if client_hash == state_hash:
@@ -168,20 +181,20 @@ class Game(BaseGame):
         )
         return Response("Updated state.", payload)
 
-    def set_single_player(self, packet: Packet) -> Response:
+    def _set_single_player(self, packet: Packet) -> Response:
         if len(self.players) >= 2:
-            return Response("Game has already started.", status=STATUS_UNEXPECTED)
+            return Response("Game has already started.", status=Status.UNEXPECTED)
         self.user_joined(BOT_NAME)
         self._next_bot_turn = arrow.now().shift(seconds=BOT_THINK_TIME)
         return Response("Started single player mode.")
 
-    def play_square(self, packet: Packet) -> Response:
+    def _play_square(self, packet: Packet) -> Response:
         username = self._current_username
         if packet.username != username or username == BOT_NAME:
-            return Response("Not your turn.", status=STATUS_UNEXPECTED)
+            return Response("Not your turn.", status=Status.UNEXPECTED)
         square = int(packet.payload["square"])
         if self.board[square]:
-            return Response("Square is already marked.", status=STATUS_UNEXPECTED)
+            return Response("Square is already marked.", status=Status.UNEXPECTED)
         self._do_play_square(square, self._username_to_mark(username))
         return Response("Marked square.")
 
@@ -200,3 +213,129 @@ class Game(BaseGame):
             return f"{self.outcome}\nSpectating {current_username}'s turn as {mark}"
         turn = "Your turn" if username == current_username else "Awaiting turn"
         return f"{turn}, playing as: {self._username_to_mark(username)}"
+
+
+class GameWidget(kx.XAnchor):
+    """Tic-tac-toe GUI widget."""
+
+    def __init__(self, client: pgnet.Client, **kwargs):
+        """Override base method."""
+        super().__init__(**kwargs)
+        self.client = client
+        self._make_widgets()
+        self.game_state = dict(state_hash=None)
+        client.on_heartbeat = self.on_heartbeat
+        client.heartbeat_payload = self.heartbeat_payload
+
+    def on_heartbeat(self, heartbeat_response: pgnet.Response):
+        """Update game state."""
+        server_hash = heartbeat_response.payload.get("state_hash")
+        if server_hash == self.game_state.get("state_hash"):
+            return
+        self.game_state = heartbeat_response.payload
+        new_hash = self.game_state.get("state_hash")
+        print(f"New game state (hash: {new_hash})")
+        if new_hash:
+            self._on_game_state(self.game_state)
+        else:
+            print(f"Missing state hash: {self.game_state=}")
+
+    def heartbeat_payload(self) -> dict:
+        """Send latest known state hash."""
+        return dict(state_hash=self.game_state.get("state_hash"))
+
+    def _make_widgets(self):
+        self.info_panel = kx.XLabel(halign="left", valign="top", padding=(10, 5))
+        self.single_player_btn = kx.XButton(
+            text="Start single player",
+            on_release=self._single_player,
+        )
+        spbtn = kx.XAnchor.wrap(self.single_player_btn, x=0.5)
+        spbtn.set_size(y=50)
+        board_frame = kx.XGrid(cols=3)
+        self.board = []
+        for i in range(9):
+            square = kx.XButton(
+                font_size=36,
+                background_normal=kx.from_atlas("vkeyboard_key_normal"),
+                background_down=kx.from_atlas("vkeyboard_key_down"),
+                on_release=lambda *a, idx=i: self._play_square(idx),
+            )
+            self.board.append(square)
+            board_frame.add_widget(kx.XAnchor.wrap(square, x=0.85, y=0.85))
+        # Assemble
+        self.panel_frame = kx.XBox(orientation="vertical")
+        self.panel_frame.add_widgets(self.info_panel, spbtn)
+        main_frame = kx.XBox()
+        main_frame.add_widgets(self.panel_frame, board_frame)
+        self.clear_widgets()
+        self.add_widget(main_frame)
+
+    def _on_game_state(self, state):
+        players = state.get("players", [])[:2]
+        spectators = state.get("players", [])[2:]
+        info = state.get('info', '')
+        if state.get("your_turn"):
+            self.panel_frame.make_bg(kx.get_color("green", v=0.2))
+            info = f"[b]{state.get('info', '')}[/b]"
+        else:
+            self.panel_frame.make_bg(kx.get_color("cyan", v=0.2))
+        self.info_panel.text = "\n".join([
+            "\n",
+            info,
+            "\n",
+            f"[u]Game:[/u] [i]{self.client.game}[/i]",
+            "\n",
+            "[u]Players:[/u]",
+            *(f" ( [b]{'OX'[i]}[/b] ) {p}" for i, p in enumerate(players)),
+            "\n",
+            "[u]Spectators:[/u]",
+            *(f" • {s}" for s in spectators),
+        ])
+        winning_line = state.get("winning_line") or tuple()
+        marks = tuple(str(s or "") for s in state.get("board", [None] * 9))
+        in_progress = state.get("in_progress")
+        for i, (square_btn, mark) in enumerate(zip(self.board, marks)):
+            square_btn.text = mark
+            winning_square = i in winning_line
+            square_btn.bold = winning_square
+            square_btn.color = (1, 0.2, 0.2) if winning_square else (1, 1, 1)
+            square_btn.disabled = False
+            color = 0.25, 0.25, 0.25
+            if winning_square or in_progress:
+                color = 0, 0.1, 0.35
+            square_btn.background_color = color
+        self.single_player_btn.disabled = len(state.get("players", "--")) >= 2
+
+    def _play_square(self, index: int, /):
+        self.client.send(pgnet.Packet("play_square", dict(square=index)))
+
+    def _single_player(self, *args):
+        self.client.send(pgnet.Packet("single_player"), print)
+
+
+INFO_TEXT = (
+    "[b][u]Welcome to MouseFox[/u][/b]"
+    "\n\n"
+    "This game of Tic-tac-toe is a builtin game example to demo MouseFox."
+)
+ONLINE_INFO_TEXT = (
+    "[u]Connecting to a server[/u]"
+    "\n\n"
+    "To register (if the server allows it) simply choose a username and password"
+    " and log in."
+)
+APP_CONFIG = dict(
+    game_class=Game,
+    game_widget=GameWidget,
+    title="MouseFox Tic-tac-toe",
+    info_text=INFO_TEXT,
+    online_info_text=ONLINE_INFO_TEXT,
+)
+
+
+def run():
+    """Run tictactoe example."""
+    from .. import run
+
+    run(**APP_CONFIG)

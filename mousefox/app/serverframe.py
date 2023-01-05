@@ -15,16 +15,16 @@ class ServerFrame(kx.XAnchor):
     def __init__(self, game_widget_class: kvex.kivy.Widget, **kwargs):
         super().__init__(**kwargs)
         self._game_widget_class = game_widget_class
-        self._client: Optional[pgnet.BaseClient] = None
+        self._client: Optional[pgnet.Client] = None
         self._next_dir_refresh: arrow.Arrow = arrow.now()
-        self.games_dir = dict()
+        self.game_dir = dict()
         self.app.menu.add_button("server", "leave_game", self._leave_game)
         self.app.controller.bind("server.leave_game", self._leave_game)
         self.app.controller.bind("server.lobby.focus_create", self._focus_create)
         self.app.controller.bind("server.lobby.focus_list", self._focus_list)
         self.make_widgets()
 
-    def set_client(self, client: pgnet.BaseClient):
+    def set_client(self, client: pgnet.Client):
         """Set the client to use for this widget."""
         if self._client:
             self._client.on_game = None
@@ -135,7 +135,7 @@ class ServerFrame(kx.XAnchor):
 
     def _show_game(self, *args, name: str = ""):
         name = self.games_list.items[self.games_list.selection]
-        game = self.games_dir.get(name)
+        game = self.game_dir.get(name)
         if not game:
             self.game_info_label.text = "No games found. Create a new game."
             self.join_panel.set_showing("password", False)
@@ -158,19 +158,27 @@ class ServerFrame(kx.XAnchor):
         values = self.create_panel.get_values()
         name = name or values["name"]
         password = password or values["password"] or None
-        self._client.create_game(name, password, callback=self._feedback_response)
+        self._client.create_game(
+            name,
+            password=password,
+            callback=self._feedback_response,
+        )
 
     def _join_game(self, *args, name: Optional[str] = None):
         if not self._client:
             return
         name = name or self.games_list.items[self.games_list.selection]
         password = None
-        game = self.games_dir.get(name)
+        game = self.game_dir.get(name)
         if not game:
             return
         if game.get("password_protected"):
             password = self.join_panel.get_value("password")
-        self._client.join_game(name, password, callback=self._feedback_response)
+        self._client.join_game(
+            name,
+            password=password,
+            callback=self._feedback_response,
+        )
 
     def _leave_game(self, *args):
         if self._client:
@@ -178,11 +186,11 @@ class ServerFrame(kx.XAnchor):
 
     def _refresh_games(self, *args):
         if self._client:
-            self._client.get_games_dir(self._on_games_dir_response)
+            self._client.get_game_dir(self._on_game_dir_response)
 
-    def _on_games_dir_response(self, games_dir_response: pgnet.Response):
-        self.games_dir = games_dir_response.payload.get("games")
-        games = sorted(self.games_dir.keys()) or [""]
+    def _on_game_dir_response(self, game_dir_response: pgnet.Response):
+        self.game_dir = game_dir_response.payload.get("games")
+        games = sorted(self.game_dir.keys()) or [""]
         self.games_list.items = games
         self._show_game()
 
@@ -200,11 +208,11 @@ class ServerFrame(kx.XAnchor):
         return self._client and self._client.game is not None
 
     def _feedback_response(self, response: pgnet.Response):
-        if response.status == pgnet.STATUS_OK:
+        if response.status == pgnet.Status.OK:
             return
         stypes = {
-            pgnet.STATUS_UNEXPECTED: "warning",
-            pgnet.STATUS_BAD: "error",
+            pgnet.Status.UNEXPECTED: "warning",
+            pgnet.Status.BAD: "error",
         }
         self.app.set_feedback(response.message, stypes[response.status])
 
