@@ -1,3 +1,4 @@
+"""Home of `ConnectionFrame`."""
 
 from dataclasses import dataclass
 import kvex as kx
@@ -34,7 +35,10 @@ class _ConnectionConfig:
 
 
 class ConnectionFrame(kx.XAnchor):
-    def __init__(self, app_config):
+    """Widget enabling to create clients for the app."""
+
+    def __init__(self, app_config: "mousefox.AppConfig"):  # noqa: F821
+        """Initialize the class."""
         super().__init__()
         if app_config.disable_local and app_config.disable_remote:
             raise ValueError("Cannot disable both local and remote clients.")
@@ -43,10 +47,10 @@ class ConnectionFrame(kx.XAnchor):
         self._server_factory = app_config.server_factory
         self._enable_local = not app_config.disable_local
         self._enable_remote = not app_config.disable_remote
-        self.make_widgets(app_config.info_text, app_config.online_info_text)
+        self._make_widgets(app_config.info_text, app_config.online_info_text)
         self.app.controller.bind("connection.start", self._connect)
 
-    def make_widgets(self, info_text, online_info_text):
+    def _make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
         config = _ConnectionConfig.load_from_disk()
         if not self._enable_remote and config.online:
@@ -173,4 +177,5 @@ class ConnectionFrame(kx.XAnchor):
             self.connection_panel.set_showing(iname, advanced)
 
     def set_focus(self, *args):
+        """Focus the input widgets."""
         self.connection_panel.set_focus("username")

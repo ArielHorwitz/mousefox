@@ -1,3 +1,4 @@
+"""Home of `ServerFrame`."""
 
 from typing import Optional
 from loguru import logger
@@ -12,8 +13,14 @@ AUTO_REFRESH_INTERVAL = 1
 
 
 class ServerFrame(kx.XAnchor):
-    def __init__(self, game_widget_class: kvex.kivy.Widget, **kwargs):
-        super().__init__(**kwargs)
+    """Widget for connected clients.
+
+    Enables interacting with the server lobby and game widget(s).
+    """
+
+    def __init__(self, game_widget_class: kvex.kivy.Widget):
+        """Initialize the class."""
+        super().__init__()
         self._game_widget_class = game_widget_class
         self._client: Optional[pgnet.Client] = None
         self._next_dir_refresh: arrow.Arrow = arrow.now()
@@ -22,17 +29,17 @@ class ServerFrame(kx.XAnchor):
         self.app.controller.bind("server.leave_game", self._leave_game)
         self.app.controller.bind("server.lobby.focus_create", self._focus_create)
         self.app.controller.bind("server.lobby.focus_list", self._focus_list)
-        self.make_widgets()
+        self._make_widgets()
 
     def set_client(self, client: pgnet.Client):
         """Set the client to use for this widget."""
         if self._client:
             self._client.on_game = None
         self._client = client
-        client.on_game = self.on_game
-        self.on_game(client.game)
+        client.on_game = self._on_game
+        self._on_game(client.game)
 
-    def make_widgets(self):
+    def _make_widgets(self):
         self.main_frame = kx.XAnchor()
         self.add_widget(self.main_frame)
         self._dummy_focus = _DummyFocus()  # For unassigning focus when not visible
@@ -98,9 +105,9 @@ class ServerFrame(kx.XAnchor):
         self.lobby_frame = kx.XBox()
         self.lobby_frame.make_bg(kx.get_color("orange", v=0.3))
         self.lobby_frame.add_widgets(list_frame, right_frame)
-        self.show_lobby()
+        self._show_lobby()
 
-    def show_lobby(self, *args):
+    def _show_lobby(self, *args):
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.lobby_frame)
         self._refresh_games()
@@ -110,7 +117,7 @@ class ServerFrame(kx.XAnchor):
         self.app.controller.set_active("server.lobby")
         self.app.game_controller.set_active(None)
 
-    def make_game(self):
+    def _make_game(self):
         self.main_frame.clear_widgets()
         self._dummy_focus.focus = True  # Avoid widget interaction when not visible
         game_frame = self._game_widget_class(self._client)
@@ -120,18 +127,19 @@ class ServerFrame(kx.XAnchor):
         self.app.game_controller.set_active("")
 
     def update(self):
+        """Widget background tasks."""
         if not self._client or not self._client.connected:
             return
         if self.lobby_frame.parent and arrow.now() > self._next_dir_refresh:
             self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
             self._refresh_games()
 
-    def on_game(self, game: Optional[str]):
+    def _on_game(self, game: Optional[str]):
         logger.info(f"New game: {game}")
         if game:
-            self.make_game()
+            self._make_game()
         else:
-            self.show_lobby()
+            self._show_lobby()
 
     def _show_game(self, *args, name: str = ""):
         name = self.games_list.items[self.games_list.selection]
@@ -202,10 +210,6 @@ class ServerFrame(kx.XAnchor):
 
     def _focus_list(self):
         self.games_list.focus = True
-
-    @property
-    def in_game(self):
-        return self._client and self._client.game is not None
 
     def _feedback_response(self, response: pgnet.Response):
         if response.status == pgnet.Status.OK:

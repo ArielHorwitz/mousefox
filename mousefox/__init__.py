@@ -70,8 +70,9 @@ import os
 import sys
 import asyncio
 from loguru import logger
-from .app.app import App, AppConfig
-from . import examples
+from . import app
+from . import examples  # noqa: F401
+from . import util  # noqa: F401
 
 
 def run(**kwargs):
@@ -88,9 +89,9 @@ async def async_run(**kwargs):
     See also: `run`.
     """
     logger.info("Starting MouseFox.")
-    config = AppConfig(**kwargs)
-    app = App(config)
-    exit_code = await app.async_run()
+    config = app.app.AppConfig(**kwargs)
+    mf_app = app.app.App(config)
+    exit_code = await mf_app.async_run()
     if not config.allow_quit:
         return
     # Restart if exit code is -1
@@ -101,9 +102,4 @@ async def async_run(**kwargs):
     quit()
 
 
-__all__ = (
-    "run",
-    "async_run",
-    "AppConfig",
-    "examples",
-)
+AppConfig = app.app.AppConfig

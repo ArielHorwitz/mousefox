@@ -68,7 +68,10 @@ class AppConfig:
 
 
 class App(kx.XApp):
+    """MouseFox GUI app."""
+
     def __init__(self, app_config: AppConfig, /):
+        """Initialize the app. It is recommended to run the app with `mousefox.run`."""
         super().__init__()
         self._client: Optional[pgnet.Client] = None
         if app_config.borderless:
@@ -100,8 +103,8 @@ class App(kx.XApp):
         self._make_menu()
         self.connection_frame = ConnectionFrame(app_config)
         self.server_frame = ServerFrame(app_config.game_widget)
-        self.make_widgets()
-        self.hook(self.update, 20)
+        self._make_widgets()
+        self.hook(self._update, 20)
         self.set_feedback("Welcome")
 
     def _register_controller(self, controller: kx.XHotkeyController):
@@ -126,7 +129,7 @@ class App(kx.XApp):
         self.menu.add_button("app", "restart", self.restart)
         self.menu.add_button("server", "disconnect", self._disconnect)
 
-    def make_widgets(self):
+    def _make_widgets(self):
         self.root.clear_widgets()
         self.root.make_bg(kx.get_color("purple", v=0.05))
         self._status = kx.XLabel(halign="left", italic=True, padding=(10, 0))
@@ -138,16 +141,16 @@ class App(kx.XApp):
         root_frame = kx.XBox(orientation="vertical")
         root_frame.add_widgets(top_bar, self.main_frame)
         self.root.add_widget(root_frame)
-        self.show_connection_screen()
+        self._show_connection_screen()
 
-    def show_connection_screen(self):
+    def _show_connection_screen(self):
         self.menu.get_button("server").disabled = True
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.connection_frame)
         self.connection_frame.set_focus()
         self.controller.set_active("connection")
 
-    def show_server_screen(self, client: pgnet.Client):
+    def _show_server_screen(self, client: pgnet.Client):
         client.on_connection = None
         self.menu.get_button("server").disabled = False
         self.main_frame.clear_widgets()
@@ -155,7 +158,7 @@ class App(kx.XApp):
         self.server_frame.set_client(client)
         self.controller.set_active("server.lobby")
 
-    def update(self, *args):
+    def _update(self, *args):
         self.server_frame.update()
 
     def set_feedback(
@@ -164,6 +167,12 @@ class App(kx.XApp):
         stype: Literal["normal", "warning", "error"] = "normal",
         /,
     ):
+        """Set feedback in the status bar.
+
+        Args:
+            text: Text to show.
+            stype: Status type, used for colors.
+        """
         self._status.text = text
         if stype == "normal":
             color = 0.8, 0.8, 0.8
@@ -176,6 +185,7 @@ class App(kx.XApp):
         self._status.color = color
 
     def set_client(self, client: pgnet.Client, /):
+        """Set a client for the app to use."""
         asyncio.create_task(self._async_set_client(client))
 
     async def _async_set_client(self, client: pgnet.Client, /):
@@ -184,7 +194,7 @@ class App(kx.XApp):
         self._client = client
         client.on_status = functools.partial(self._on_client_status, client)
         self.set_feedback(client.status)
-        client.on_connection = lambda *args: self.show_server_screen(client)
+        client.on_connection = lambda *args: self._show_server_screen(client)
         await client.async_connect()
 
     def _on_client_status(self, client: pgnet.Client, status: str):
@@ -196,9 +206,10 @@ class App(kx.XApp):
     def _disconnect(self, *args):
         if self._client:
             self._client.disconnect()
-        self.show_connection_screen()
+        self._show_connection_screen()
 
     async def async_run(self):
+        """Override base method."""
         r = await super().async_run()
         if self._client:
             self._client.disconnect()
