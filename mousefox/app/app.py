@@ -184,6 +184,27 @@ class App(kx.XApp):
             raise ValueError("Unknown status type.")
         self._status.color = color
 
+    def feedback_response(
+        self,
+        response: pgnet.Response,
+        *,
+        only_statuses: bool = True,
+    ):
+        """Send a response to status bar.
+
+        Args:
+            response: pgnet Response.
+            only_statuses: Ignore responses with OK status.
+        """
+        if only_statuses and response.status == pgnet.Status.OK:
+            return
+        stypes = {
+            pgnet.Status.OK: "normal",
+            pgnet.Status.UNEXPECTED: "warning",
+            pgnet.Status.BAD: "error",
+        }
+        self.set_feedback(response.message, stypes[response.status])
+
     def set_client(self, client: pgnet.Client, /):
         """Set a client for the app to use."""
         asyncio.create_task(self._async_set_client(client))

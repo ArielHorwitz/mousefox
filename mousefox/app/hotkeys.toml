@@ -13,3 +13,4 @@ leave_game = "^ home"
 [server.lobby]
 focus_create = "^ n"
 focus_list = "^ j"
+show_admin_panel = "^ end"

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import kvex as kx
+import pgnet
 from .. import util
 
 
@@ -160,6 +161,7 @@ class ConnectionFrame(kx.XAnchor):
         else:
             client = self._client_class.local(
                 username=username,
+                password=pgnet.util.DEFAULT_ADMIN_PASSWORD,
                 game=self._game_class,
                 server_factory=self._server_factory,
             )
