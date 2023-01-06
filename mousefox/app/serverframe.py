@@ -107,8 +107,8 @@ class ServerFrame(kx.XAnchor):
         self._show_game()
         self.games_list.focus = True
         self.app.menu.get_button("server", "leave_game").disabled = True
-        self.app.controller.set("server.lobby")
-        self.app.game_controller.set(None)
+        self.app.controller.set_active("server.lobby")
+        self.app.game_controller.set_active(None)
 
     def make_game(self):
         self.main_frame.clear_widgets()
@@ -116,8 +116,8 @@ class ServerFrame(kx.XAnchor):
         game_frame = self._game_widget_class(self._client)
         self.main_frame.add_widget(game_frame)
         self.app.menu.get_button("server", "leave_game").disabled = False
-        self.app.controller.set("server.game")
-        self.app.game_controller.set("")
+        self.app.controller.set_active("server.game")
+        self.app.game_controller.set_active("")
 
     def update(self):
         if not self._client or not self._client.connected:

@@ -116,7 +116,7 @@ class App(kx.XApp):
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.connection_frame)
         self.connection_frame.set_focus()
-        self.controller.set("connection")
+        self.controller.set_active("connection")
 
     def show_server_screen(self, client: pgnet.BaseClient):
         client.on_connection = None
@@ -124,7 +124,7 @@ class App(kx.XApp):
         self.main_frame.clear_widgets()
         self.main_frame.add_widget(self.server_frame)
         self.server_frame.set_client(client)
-        self.controller.set("server.lobby")
+        self.controller.set_active("server.lobby")
 
     def update(self, *args):
         self.server_frame.update()
