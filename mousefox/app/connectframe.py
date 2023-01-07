@@ -1,38 +1,41 @@
 """Home of `ConnectionFrame`."""
 
 from dataclasses import dataclass
+from loguru import logger
+import json
 import kvex as kx
 import pgnet
 from .. import util
 
 
 LINE_HEIGHT = 40
-CONFIG_FILE = util.get_appdata_dir() / "connection_config.txt"
+CONFIG_FILE = util.get_appdata_dir() / "connection_config.json"
 
 
 @dataclass
 class _ConnectionConfig:
     online: bool = False
-    username: str = "guest"
+    username: str = pgnet.util.ADMIN_USERNAME
     address: str = "localhost"
-    port: int = 38929
+    port: int = pgnet.util.DEFAULT_PORT
     pubkey: str = ""
 
     @classmethod
     def load_from_disk(cls) -> "_ConnectionConfig":
-        try:
-            with open(CONFIG_FILE) as f:
-                data = f.read()
-            online, user, addr, port, pubkey = data.splitlines()
-            return cls(bool(online), user, addr, int(port), pubkey)
-        except Exception:
+        if not CONFIG_FILE.is_file():
             return cls()
+        with open(CONFIG_FILE) as f:
+            try:
+                config = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                logger.warning(f"Failed to load connection config: {e}")
+                return cls()
+        return cls(**config)
 
     def save_to_disk(self):
-        data = [int(self.online), self.username, self.address, self.port, self.pubkey]
+        data = {k: getattr(self, k) for k in self.__dataclass_fields__.keys()}
         with open(CONFIG_FILE, "w") as f:
-            f.write("\n".join(str(d) for d in data))
-            f.write("\n")
+            json.dump(data, f, indent=4)
 
 
 class ConnectionFrame(kx.XAnchor):
