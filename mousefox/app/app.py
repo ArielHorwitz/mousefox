@@ -10,6 +10,7 @@ import kvex.kivy
 import pgnet
 from .. import util
 from .clientframe import ClientFrame
+from .serverframe import ServerFrame
 
 
 HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
@@ -168,10 +169,7 @@ class App(kx.XApp):
         self._make_menu()
         self._status = kx.XLabel(halign="left", italic=True, padding=(10, 0))
         self._client_frame = ClientFrame(app_config)
-        self._server_frame = kx.XPlaceholder(
-            label_text="Server hosting not implemented.",
-            callback=self._show_client,
-        )
+        self._server_frame = ServerFrame(app_config)
         self._sm = kx.XScreenManager.from_widgets(
             dict(
                 client=self._client_frame,
