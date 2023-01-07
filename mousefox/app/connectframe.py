@@ -11,7 +11,7 @@ CONFIG_FILE = util.get_appdata_dir() / "connection_config.txt"
 
 @dataclass
 class _ConnectionConfig:
-    online: bool = True
+    online: bool = False
     username: str = "guest"
     address: str = "localhost"
     port: int = 38929
