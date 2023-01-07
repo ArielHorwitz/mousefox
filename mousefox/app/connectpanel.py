@@ -1,5 +1,6 @@
-"""Home of `ConnectionFrame`."""
+"""Home of `ConnectPanel`."""
 
+from typing import Callable
 from dataclasses import dataclass
 from loguru import logger
 import json
@@ -38,10 +39,14 @@ class _ConnectionConfig:
             json.dump(data, f, indent=4)
 
 
-class ConnectionFrame(kx.XAnchor):
-    """Widget enabling to create clients for the app."""
+class ConnectPanel(kx.XAnchor):
+    """Widget enabling creation of clients."""
 
-    def __init__(self, app_config: "mousefox.AppConfig"):  # noqa: F821
+    def __init__(
+        self,
+        app_config: "mousefox.AppConfig",  # noqa: F821
+        on_client: Callable,
+    ):
         """Initialize the class."""
         super().__init__()
         if app_config.disable_local and app_config.disable_remote:
@@ -51,8 +56,9 @@ class ConnectionFrame(kx.XAnchor):
         self._server_factory = app_config.server_factory
         self._enable_local = not app_config.disable_local
         self._enable_remote = not app_config.disable_remote
+        self._on_client = on_client
         self._make_widgets(app_config.info_text, app_config.online_info_text)
-        self.app.controller.bind("connection.start", self._connect)
+        self.app.controller.bind("client.connect.start", self._connect)
 
     def _make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
@@ -168,9 +174,9 @@ class ConnectionFrame(kx.XAnchor):
                 game=self._game_class,
                 server_factory=self._server_factory,
             )
-        self.app.set_client(client)
         config = _ConnectionConfig(online, username, address, port, pubkey)
         config.save_to_disk()
+        self._on_client(client)
 
     def _on_connection_values(self, w, values: dict):
         online = values["online"]

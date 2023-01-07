@@ -2,15 +2,16 @@
 quit = "^+ q"
 restart = "^+ w"
 debug = "^+ d"
-disconnect = "^+ home"
+show_client = "^+ home"
+show_server = "^+ end"
 
-[connection]
-start = ["enter", "numpadenter"]
-
-[server]
+[client]
 leave_game = "^ home"
 
-[server.lobby]
+[client.connect]
+start = ["enter", "numpadenter"]
+
+[client.lobby]
 focus_create = "^ n"
 focus_list = "^ j"
 show_admin_panel = "^ end"

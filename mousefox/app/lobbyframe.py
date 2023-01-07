@@ -20,11 +20,11 @@ class LobbyFrame(kx.XAnchor):
         self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.game_dir = dict()
         self._make_widgets()
-        self.app.controller.bind("server.lobby.focus_create", self._focus_create)
-        self.app.controller.bind("server.lobby.focus_list", self._focus_list)
+        self.app.controller.bind("client.lobby.focus_create", self._focus_create)
+        self.app.controller.bind("client.lobby.focus_list", self._focus_list)
 
     def update(self):
-        """Refresh game dir periodically."""
+        """Priodically refresh game directory."""
         if arrow.now() > self._next_dir_refresh:
             self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
             self._refresh_games()
