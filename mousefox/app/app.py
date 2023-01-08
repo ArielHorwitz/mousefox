@@ -200,6 +200,7 @@ class App(kx.XApp):
         self.menu.add_category("app")
         self.menu.add_category("game")
         menu_add = self.menu.add_button
+        menu_get = self.menu.get_button
         menu_add("app", "quit", self.stop)
         menu_add("app", "restart", self.restart)
         menu_add("app", "host_server", self._show_server)
@@ -208,6 +209,11 @@ class App(kx.XApp):
         menu_add("app", "lobby")
         menu_add("app", "game")
         menu_add("app", "admin_panel")
+        menu_get("app", "disconnect").disabled = True
+        menu_get("app", "leave_game").disabled = True
+        menu_get("app", "lobby").disabled = True
+        menu_get("app", "game").disabled = True
+        menu_get("app", "admin_panel").disabled = True
 
     def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)

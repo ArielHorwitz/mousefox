@@ -29,6 +29,9 @@ class UserFrame(kx.XAnchor):
         self.app.menu.set_callback("app", "lobby", self._show_lobby)
         self.app.menu.set_callback("app", "game", self._show_game)
         self.app.menu.set_callback("app", "admin_panel", self._show_admin)
+        self.app.menu.get_button("app", "lobby").disabled = True
+        self.app.menu.get_button("app", "game").disabled = True
+        self.app.menu.get_button("app", "admin_panel").disabled = True
         self.app.controller.bind(f"{self._conpath}.leave_game", self._leave_game)
         self.app.controller.bind(f"{self._conpath}.show_lobby", self._show_lobby)
         self.app.controller.bind(f"{self._conpath}.show_game", self._show_game)
@@ -37,11 +40,13 @@ class UserFrame(kx.XAnchor):
 
     def update(self):
         """Background refresh tasks."""
-        leave_btn = self.app.menu.get_button("app", "leave_game")
-        if self._client.game:
-            leave_btn.disabled = False
-        else:
-            leave_btn.disabled = True
+        menu_get = self.app.menu.get_button
+        current = self._sm.current
+        disable = not self.app.controller.is_active(self._conpath)
+        menu_get("app", "lobby").disabled = current == "lobby" or disable
+        menu_get("app", "game").disabled = current == "game" or disable
+        menu_get("app", "admin_panel").disabled = current == "admin" or disable
+        menu_get("app", "leave_game").disabled = not bool(self._client.game)
         self.lobby_frame.update()
 
     def _make_widgets(self):
