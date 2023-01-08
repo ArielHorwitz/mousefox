@@ -142,7 +142,7 @@ class GameWidget(kx.XAnchor):
             padding=(10, 5),
         )
         self.info_panel.set_size(x="200dp")
-        self.info_panel.make_bg(kx.get_color("cyan", v=0.2))
+        self.info_panel.make_bg(kx.get_color("primary", v=0.75))
         self.messages_label = kx.XLabel(
             text="Getting chat messages...",
             halign="left",
@@ -150,12 +150,12 @@ class GameWidget(kx.XAnchor):
             padding=(10, 5),
             fixed_width=True,
         )
-        self.messages_label.make_bg(kx.get_color("white", v=0.05))
         self.message_input = kx.XInput(on_text_validate=self._message_validate)
         self.message_input.set_size(y=100)
         self.message_input.focus = True
         chat_frame = kx.XBox(orientation="vertical")
         messages_frame = kx.XScroll(view=self.messages_label)
+        messages_frame.make_bg(kx.get_color("main", v=0.75))
         chat_frame.add_widgets(messages_frame, self.message_input)
         main_frame = kx.XBox()
         main_frame.add_widgets(self.info_panel, chat_frame)

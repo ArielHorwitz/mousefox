@@ -7,7 +7,6 @@ import json
 import kvex as kx
 import pgnet
 from .. import util
-from .palette import Palette
 
 
 LINE_HEIGHT = 40
@@ -91,7 +90,7 @@ class ConnectPanel(kx.XAnchor):
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(info_label, self._online_info_label)
         left_frame = kx.XAnchor.wrap(left_frame, x=1, y=0.9)
-        left_frame.make_bg(Palette.BG_BASE)
+        left_frame.make_bg(self.app.get_color("main", v=0.75))
         # Connection details
         pwidgets = dict(
             online=kx.XInputPanelWidget(
@@ -143,11 +142,9 @@ class ConnectPanel(kx.XAnchor):
         )
         # Assemble
         main_frame = kx.XBox()
-        main_frame.add_widgets(
-            left_frame,
-            kx.XAnchor.wrap(self.connection_panel)
-        )
-        main_frame.make_bg(Palette.BG_MAIN)
+        right_frame = kx.XAnchor.wrap(self.connection_panel)
+        right_frame.make_bg(self.app.get_color("primary", v=0.75))
+        main_frame.add_widgets(left_frame, right_frame)
         self.add_widget(kx.XAnchor.wrap(main_frame))
 
     def _connect(self, *args):

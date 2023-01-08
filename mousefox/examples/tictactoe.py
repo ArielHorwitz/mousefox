@@ -261,13 +261,16 @@ class GameWidget(kx.XAnchor):
                 background_down=kx.from_atlas("vkeyboard_key_down"),
                 on_release=lambda *a, idx=i: self._play_square(idx),
             )
+            square.background_color = kx.get_color("main").rgba
             self.board.append(square)
             board_frame.add_widget(kx.XAnchor.wrap(square, x=0.85, y=0.85))
         # Assemble
         self.panel_frame = kx.XBox(orientation="vertical")
         self.panel_frame.add_widgets(self.info_panel, spbtn)
+        self.panel_frame.set_size(x="350dp")
         main_frame = kx.XBox()
         main_frame.add_widgets(self.panel_frame, board_frame)
+        main_frame.make_bg(kx.get_color("second_", v=0.5))
         self.clear_widgets()
         self.add_widget(main_frame)
 
@@ -276,10 +279,10 @@ class GameWidget(kx.XAnchor):
         spectators = state.get("players", [])[2:]
         info = state.get('info', '')
         if state.get("your_turn"):
-            self.panel_frame.make_bg(kx.get_color("green", v=0.2))
+            self.panel_frame.make_bg(kx.get_color("primary", v=0.75))
             info = f"[b]{state.get('info', '')}[/b]"
         else:
-            self.panel_frame.make_bg(kx.get_color("cyan", v=0.2))
+            self.panel_frame.make_bg(kx.get_color("primary", v=0.5))
         self.info_panel.text = "\n".join([
             "\n",
             info,
@@ -294,17 +297,12 @@ class GameWidget(kx.XAnchor):
         ])
         winning_line = state.get("winning_line") or tuple()
         marks = tuple(str(s or "") for s in state.get("board", [None] * 9))
-        in_progress = state.get("in_progress")
         for i, (square_btn, mark) in enumerate(zip(self.board, marks)):
             square_btn.text = mark
             winning_square = i in winning_line
             square_btn.bold = winning_square
-            square_btn.color = (1, 0.2, 0.2) if winning_square else (1, 1, 1)
-            square_btn.disabled = False
-            color = 0.25, 0.25, 0.25
-            if winning_square or in_progress:
-                color = 0, 0.1, 0.35
-            square_btn.background_color = color
+            text_color = kx.get_color("second" if winning_square else "primary_")
+            square_btn.color = text_color.rgba
         self.single_player_btn.disabled = len(state.get("players", "--")) >= 2
 
     def _play_square(self, index: int, /):

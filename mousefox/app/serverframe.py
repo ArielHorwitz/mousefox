@@ -5,7 +5,6 @@ from loguru import logger
 import asyncio
 import kvex as kx
 import pgnet
-from .palette import Palette
 
 
 INFO_TEXT = (
@@ -60,7 +59,7 @@ class ServerFrame(kx.XAnchor):
             info_label,
             kx.XAnchor.wrap(return_btn),
         )
-        left_frame.make_bg(Palette.BG_BASE)
+        left_frame.make_bg(self.app.get_color("main", v=0.75))
         # Right frame
         config_panel_widgets = {
             "admin_password": kx.XInputPanelWidget(
@@ -106,7 +105,7 @@ class ServerFrame(kx.XAnchor):
             kx.XAnchor.wrap(self.shutdown_btn),
         )
         right_frame = kx.XAnchor.wrap(right_frame)
-        right_frame.make_bg(Palette.BG_MAIN)
+        right_frame.make_bg(self.app.get_color("primary", v=0.75))
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, right_frame)
         wrapped_frame = kx.XAnchor.wrap(main_frame)

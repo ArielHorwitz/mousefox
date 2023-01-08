@@ -11,9 +11,9 @@ import pgnet
 from .. import util
 from .clientframe import ClientFrame
 from .serverframe import ServerFrame
-from .palette import Palette
 
 
+COLOR_PALETTE = "default"
 HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
 MINIMUM_SIZE = (1024, 768)
 
@@ -116,6 +116,10 @@ class App(kx.XApp):
         await _close_remaining_tasks()
         return r
 
+    def get_color(self, *args, **kwargs) -> kx.XColor:
+        """Wraps `kx.get_color` to use the app's color palette."""
+        return kx.get_color(*args, palette=COLOR_PALETTE, **kwargs)
+
     def set_feedback(
         self,
         text: str,
@@ -186,9 +190,9 @@ class App(kx.XApp):
         top_bar = kx.XBox()
         top_bar.add_widgets(self.menu, self._status)
         top_bar.set_size(y="32dp")
-        top_bar.make_bg(Palette.BG_ALT2)
+        top_bar.make_bg(self.get_color("second", v=0.5))
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.make_bg(Palette.BG_ALT)
+        main_frame.make_bg(self.get_color("second", v=0.75))
         main_frame.add_widgets(top_bar, self._sm)
         self.root.clear_widgets()
         self.root.add_widget(main_frame)

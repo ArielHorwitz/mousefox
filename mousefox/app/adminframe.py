@@ -5,7 +5,6 @@ import json
 import kvex as kx
 import pgnet
 import pprint
-from .palette import Palette
 
 
 _STATUSES = {s.value: s for s in pgnet.Status}
@@ -25,7 +24,7 @@ class AdminFrame(kx.XAnchor):
         self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
 
     def _make_widgets(self):
-        self.make_bg(Palette.BG_BASE)
+        self.make_bg(self.app.get_color("primary", v=0.75))
         title = kx.XLabel(text="Admin Panel", bold=True, font_size="36dp")
         title.set_size(y="40dp")
         packet_input_widgets = dict(
@@ -54,10 +53,10 @@ class AdminFrame(kx.XAnchor):
             fixed_width=True,
         )
         response_label_frame = kx.XScroll(view=self.response_label)
-        response_label_frame.make_bg(Palette.BG_ALT)
+        response_label_frame.make_bg(self.app.get_color("main", v=0.75))
         debug_label_frame = kx.XScroll(view=self.debug_label)
         debug_label_frame.set_size(hx=0.5)
-        debug_label_frame.make_bg(Palette.BG_ALT2)
+        debug_label_frame.make_bg(self.app.get_color("main_", v=0.25))
         bottom_frame = kx.XBox()
         bottom_frame.add_widgets(response_label_frame, debug_label_frame)
         main_frame = kx.XBox(orientation="vertical")
