@@ -14,6 +14,9 @@ class UserFrame(kx.XAnchor):
 
     Enables interacting with the server lobby and game widget(s).
     """
+
+    _conpath = "client.user"
+
     def __init__(self, client: pgnet.client, game_widget_class: kvex.kivy.Widget):
         """Initialize the class with the game widget class."""
         super().__init__()
@@ -22,6 +25,15 @@ class UserFrame(kx.XAnchor):
         self._make_widgets()
         self._client.on_game = self._on_game
         self._on_game(client.game)
+        self.app.menu.set_callback("app", "leave_game", self._leave_game)
+        self.app.menu.set_callback("app", "lobby", self._show_lobby)
+        self.app.menu.set_callback("app", "game", self._show_game)
+        self.app.menu.set_callback("app", "admin_panel", self._show_admin)
+        self.app.controller.bind(f"{self._conpath}.leave_game", self._leave_game)
+        self.app.controller.bind(f"{self._conpath}.show_lobby", self._show_lobby)
+        self.app.controller.bind(f"{self._conpath}.show_game", self._show_game)
+        self.app.controller.bind(f"{self._conpath}.show_admin", self._show_admin)
+        self.app.controller.set_active_callback(self._conpath, self._show_lobby)
 
     def update(self):
         """Background refresh tasks."""
@@ -30,50 +42,52 @@ class UserFrame(kx.XAnchor):
             leave_btn.disabled = False
         else:
             leave_btn.disabled = True
-            self.lobby_frame.update()
+        self.lobby_frame.update()
 
     def _make_widgets(self):
         self.lobby_frame = LobbyFrame(self._client)
         self.admin_frame = AdminFrame(self._client)
-        self.game_frame = kx.XAnchor()
+        game_placeholder = kx.XPlaceholder(
+            label_text="No game in progress.",
+            button_text="Return to lobby",
+            callback=self._show_lobby,
+        )
+        self.game_frame = kx.XContainer(game_placeholder)
         self._sm = kx.XScreenManager.from_widgets(dict(
-            admin=self.admin_frame,
             lobby=self.lobby_frame,
             game=self.game_frame,
+            admin=self.admin_frame,
         ))
         self._sm.transition.duration = 0.1
         self.add_widget(self._sm)
-        self.app.menu.set_callback("app", "leave_game", self._leave_game)
-        self.app.controller.bind("client.leave_game", self._leave_game)
-        self.app.controller.bind("client.lobby.show_admin_panel", self._show_admin)
+
+    def _switch_screen(self, name: str):
+        self._sm.transition.direction = self._sm.screen_direction(name)
+        self._sm.current = name
+        is_game = name == "game"
+        self.app.controller.active = f"{self._conpath}.{name}"
+        self.app.game_controller.active = "" if is_game else None
 
     def _show_admin(self, *args):
-        self._sm.transition.direction = self._sm.screen_direction("admin")
-        self._sm.current = "admin"
-        self.app.controller.active = "client.admin"
-        self.app.game_controller.active = None
-        self.admin_frame.set_focus()
+        self._switch_screen("admin")
 
     def _show_lobby(self, *args):
-        self._sm.transition.direction = self._sm.screen_direction("lobby")
-        self._sm.current = "lobby"
-        self.app.controller.active = "client.lobby"
-        self.app.game_controller.active = None
-        self.lobby_frame.set_focus()
+        self._switch_screen("lobby")
+
+    def _show_game(self, *args):
+        self._switch_screen("game")
 
     def _make_game(self):
-        self.app.game_controller.active = ""
         game_frame = self._game_widget_class(self._client)
-        self.game_frame.add_widget(game_frame)
-        self._sm.transition.direction = self._sm.screen_direction("game")
-        self._sm.current = "game"
-        self.app.controller.active = "client.game"
+        self.game_frame.content = game_frame
+        self._switch_screen("game")
 
     def _on_game(self, game: Optional[str]):
         logger.info(f"New game: {game}")
         if game:
             self._make_game()
         else:
+            self.game_frame.content = None
             self._show_lobby()
 
     def _leave_game(self, *args):

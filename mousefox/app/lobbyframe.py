@@ -13,6 +13,8 @@ AUTO_REFRESH_INTERVAL = 1
 class LobbyFrame(kx.XAnchor):
     """Widget for interacting with the server lobby."""
 
+    _conpath = "client.user.lobby"
+
     def __init__(self, client: pgnet.Client):
         """Initialize the class."""
         super().__init__()
@@ -20,15 +22,21 @@ class LobbyFrame(kx.XAnchor):
         self._next_dir_refresh: arrow.Arrow = arrow.now()
         self.game_dir = dict()
         self._make_widgets()
-        self.app.controller.bind("client.lobby.focus_create", self._focus_create)
-        self.app.controller.bind("client.lobby.focus_list", self._focus_list)
-        self.app.controller.set_active_callback("client.lobby", self._focus_list)
+        self.app.controller.bind(f"{self._conpath}.focus", self._focus_list)
+        self.app.controller.bind(f"{self._conpath}.focus_create", self._focus_create)
+        self.app.controller.bind(f"{self._conpath}.focus_list", self._focus_list)
+        self.app.controller.set_active_callback(self._conpath, self._focus_list)
 
     def update(self):
         """Priodically refresh game directory."""
-        if arrow.now() > self._next_dir_refresh:
-            self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
-            self._refresh_games()
+        if not self.app.controller.is_active(self._conpath):
+            return
+        if not self._client.connected:
+            return
+        if arrow.now() < self._next_dir_refresh:
+            return
+        self._next_dir_refresh = arrow.now().shift(seconds=AUTO_REFRESH_INTERVAL)
+        self._refresh_games()
 
     def on_parent(self, w, parent):
         """Refresh when shown."""

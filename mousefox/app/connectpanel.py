@@ -42,6 +42,8 @@ class _ConnectionConfig:
 class ConnectPanel(kx.XAnchor):
     """Widget enabling creation of clients."""
 
+    _conpath = "client.connect"
+
     def __init__(
         self,
         app_config: "mousefox.AppConfig",  # noqa: F821
@@ -58,8 +60,8 @@ class ConnectPanel(kx.XAnchor):
         self._enable_remote = not app_config.disable_remote
         self._on_client = on_client
         self._make_widgets(app_config.info_text, app_config.online_info_text)
-        self.app.controller.bind("client.connect.start", self._connect)
-        self.app.controller.set_active_callback("client.connect", self.set_focus)
+        self.app.controller.set_active_callback(self._conpath, self.set_focus)
+        self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
 
     def _make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
@@ -150,6 +152,7 @@ class ConnectPanel(kx.XAnchor):
         self.add_widget(main_frame)
 
     def _connect(self, *args):
+        self.connection_panel.set_focus("username")
         get_value = self.connection_panel.get_value
         online = get_value("online")
         advanced = online and get_value("advanced")

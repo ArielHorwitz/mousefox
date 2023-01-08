@@ -13,12 +13,15 @@ _STATUSES = {s.value: s for s in pgnet.Status}
 class AdminFrame(kx.XAnchor):
     """Widget for admin controls."""
 
+    _conpath = "client.user.admin"
+
     def __init__(self, client: pgnet.Client):
         """Initialize the class with a client."""
         super().__init__()
         self._client = client
         self._make_widgets()
-        self.app.controller.set_active_callback("client.admin", self.set_focus)
+        self.app.controller.set_active_callback(self._conpath, self.set_focus)
+        self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
 
     def _make_widgets(self):
         title = kx.XLabel(text="Admin Panel", bold=True, font_size="36dp")

@@ -16,6 +16,8 @@ class ClientFrame(kx.XAnchor):
     successful connection.
     """
 
+    _conpath = "client"
+
     def __init__(self, app_config):
         """Initialize the class with an `AppConfig`."""
         super().__init__()
@@ -23,7 +25,8 @@ class ClientFrame(kx.XAnchor):
         self._make_widgets(app_config)
         self._client: Optional[pgnet.Client] = None
         self.app.menu.set_callback("app", "disconnect", self._disconnect)
-        self.app.controller.set_active_callback("client", self._on_screen)
+        self.app.controller.bind("client.user.disconnect", self._disconnect)
+        self.app.controller.set_active_callback(self._conpath, self._on_screen)
         self._on_screen()
 
     def update(self, *args):
@@ -50,11 +53,13 @@ class ClientFrame(kx.XAnchor):
             assert self._user_container.content is None
             self.app.menu.get_button("app", "disconnect").disabled = True
             self.app.menu.get_button("app", "leave_game").disabled = True
-            self.app.controller.active = "client.connect"
+            if self.app.controller.active.startswith(self._conpath):
+                self.app.controller.active = f"{self._conpath}.connect"
             self._connect_panel.set_focus()
         elif self._sm.current == "user":
             self.app.menu.get_button("app", "disconnect").disabled = False
-            self.app.controller.active = "client.lobby"
+            if self.app.controller.active.startswith(self._conpath):
+                self.app.controller.active = f"{self._conpath}.user"
             userframe = self._user_container.content
             if userframe:
                 userframe.set_focus()

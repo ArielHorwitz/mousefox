@@ -25,13 +25,16 @@ INFO_TEXT = (
 class ServerFrame(kx.XAnchor):
     """Widget for launching server."""
 
+    _conpath = "server"
+
     def __init__(self, app_config):
         """Initialize the class with an `AppConfig`."""
         super().__init__()
         self._running_server: Optional[pgnet.Server] = None
         self._game_class = app_config.game_class
         self._make_widgets(app_config)
-        self.app.controller.set_active_callback("server", self.set_focus)
+        self.app.controller.set_active_callback(self._conpath, self.set_focus)
+        self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
 
     def _make_widgets(self, app_config):
         info_label = kx.XLabel(
@@ -47,7 +50,10 @@ class ServerFrame(kx.XAnchor):
         )
         left_frame.make_bg(kx.get_color("purple", v=0.2))
         config_panel_widgets = {
-            "admin_password": kx.XInputPanelWidget("Admin password:"),
+            "admin_password": kx.XInputPanelWidget(
+                "Admin password:",
+                default=pgnet.util.DEFAULT_ADMIN_PASSWORD,
+            ),
             "save_file": kx.XInputPanelWidget("Save file:", 'str'),
             "port": kx.XInputPanelWidget("Port:", 'int', pgnet.util.DEFAULT_PORT),
             "require_user_password": kx.XInputPanelWidget(
@@ -85,6 +91,7 @@ class ServerFrame(kx.XAnchor):
         self.add_widget(main_frame)
 
     def _on_config_invoke(self, w, values):
+        self.set_focus()
         server_kwargs = dict(
             listen_globally=True,
             admin_password=values["admin_password"],

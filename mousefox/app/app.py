@@ -87,6 +87,7 @@ class App(kx.XApp):
         self.title = app_config.title
         """App title."""
         self.controller = kx.XHotkeyController(
+            name="app",
             logger=logger.debug,
             log_register=True,
             log_bind=True,
@@ -95,6 +96,7 @@ class App(kx.XApp):
         )
         self._register_controller(self.controller)
         self.game_controller = kx.XHotkeyController(
+            name="game",
             logger=logger.debug,
             log_register=True,
             log_bind=True,
@@ -202,6 +204,9 @@ class App(kx.XApp):
         menu_add("app", "host_server", self._show_server)
         menu_add("app", "disconnect")
         menu_add("app", "leave_game")
+        menu_add("app", "lobby")
+        menu_add("app", "game")
+        menu_add("app", "admin_panel")
 
     def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)

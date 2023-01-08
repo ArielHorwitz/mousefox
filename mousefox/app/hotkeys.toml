@@ -2,16 +2,25 @@
 quit = "^+ q"
 restart = "^+ w"
 debug = "^+ d"
-show_client = "^+ home"
-show_server = "^+ end"
+show_client = "^+ f1"
+show_server = "^+ f2"
 
-[client]
-leave_game = "^ home"
+[server]
+focus = "^ `"
 
 [client.connect]
-start = ["enter", "numpadenter"]
+focus = "^ `"
 
-[client.lobby]
+[client.user]
+leave_game = "^ home"
+show_lobby = "f1"
+show_game = "f2"
+show_admin = "f3"
+
+[client.user.lobby]
+focus = "^ `"
 focus_create = "^ n"
 focus_list = "^ j"
-show_admin_panel = "^ end"
+
+[client.user.admin]
+focus = "^ `"
