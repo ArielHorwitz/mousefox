@@ -91,7 +91,6 @@ class ConnectPanel(kx.XAnchor):
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(info_label, self._online_info_label)
         left_frame = kx.XAnchor.wrap(left_frame, x=1, y=0.9)
-        left_frame.set_size(x=350)
         left_frame.make_bg(Palette.BG_BASE)
         # Connection details
         pwidgets = dict(
@@ -144,13 +143,12 @@ class ConnectPanel(kx.XAnchor):
         )
         # Assemble
         main_frame = kx.XBox()
-        main_frame.set_size(x=900, y=700)
         main_frame.add_widgets(
             left_frame,
             kx.XAnchor.wrap(self.connection_panel)
         )
         main_frame.make_bg(Palette.BG_MAIN)
-        self.add_widget(main_frame)
+        self.add_widget(kx.XAnchor.wrap(main_frame))
 
     def _connect(self, *args):
         self.connection_panel.set_focus("username")
