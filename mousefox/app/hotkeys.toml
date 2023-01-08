@@ -7,11 +7,13 @@ show_server = "^+ f2"
 
 [server]
 focus = "^ `"
+shutdown = "^ q"
 
 [client.connect]
 focus = "^ `"
 
 [client.user]
+disconnect = "^+ home"
 leave_game = "^ home"
 show_lobby = "f1"
 show_game = "f2"

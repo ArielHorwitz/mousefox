@@ -5,20 +5,24 @@ from loguru import logger
 import asyncio
 import kvex as kx
 import pgnet
+from .palette import Palette
 
 
 INFO_TEXT = (
-    "[size=24dp][b][u]Running a server[/u][/b][/size]"
+    "[size=20dp][b][u]Hosting a server[/u][/b][/size]"
     "\n\n"
-    "You may require to configuring port forwarding on your network device before"
-    " remote clients can discover a server."
-    "\n"
     "[color=#ffbbbb][i]Please consider your network security before running a"
     " server[/i][/color]."
+    "\n\n"
+    "For best performance, run the server in a separate instance."
+    " You may be required to configure port forwarding on your network device before"
+    " remote clients can discover a server."
     "\n\n\n"
     "The running server is available at address"
-    " [font=RobotoMono-Regular]localhost[/font] and can be connected to normally. To"
-    " manage a server, connect as admin and use the admin panel."
+    " [font=RobotoMono-Regular][color=#ffffbb]localhost[/color][/font] and can be"
+    " connected to normally. To manage a server, connect as admin and use the admin"
+    " panel."
+    "\n\n\n"
 )
 
 
@@ -35,20 +39,29 @@ class ServerFrame(kx.XAnchor):
         self._make_widgets(app_config)
         self.app.controller.set_active_callback(self._conpath, self.set_focus)
         self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
+        self.app.controller.bind(f"{self._conpath}.shutdown", self._shutdown_server)
 
     def _make_widgets(self, app_config):
+        # Left frame
         info_label = kx.XLabel(
             text=INFO_TEXT,
             halign="left",
             valign="top",
             padding=(10, 10),
-            font_size="18dp",
         )
+        info_label.set_size(hy=5)
+        return_btn = kx.XButton(
+            text="Return to client",
+            on_release=self._return_to_client,
+        )
+        return_btn.set_size(x="250dp", y="40dp")
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(
             info_label,
+            kx.XAnchor.wrap(return_btn),
         )
-        left_frame.make_bg(kx.get_color("purple", v=0.2))
+        left_frame.make_bg(Palette.BG_BASE)
+        # Right frame
         config_panel_widgets = {
             "admin_password": kx.XInputPanelWidget(
                 "Admin password:",
@@ -59,7 +72,7 @@ class ServerFrame(kx.XAnchor):
             "require_user_password": kx.XInputPanelWidget(
                 "Require user password:",
                 widget="bool",
-                default=True,
+                default=False,
             ),
         }
         self._config_panel = kx.XInputPanel(
@@ -69,26 +82,35 @@ class ServerFrame(kx.XAnchor):
         self._config_panel.bind(on_invoke=self._on_config_invoke)
         config_frame = kx.XAnchor.wrap(self._config_panel)
         config_frame.set_size(hy=5)
+        self.pubkey_label = kx.XInput(
+            text="No server running.",
+            readonly=True,
+            disabled=True,
+            select_on_focus=True,
+            halign="center",
+        )
+        self.pubkey_label.set_size(y="40dp")
+        pubkey_label_hint = kx.XLabel(text="Server pubkey:")
+        pubkey_label_hint.set_size(y="40dp")
         self.shutdown_btn = kx.XButton(
             text="Shutdown server",
             on_release=self._shutdown_server,
             disabled=True,
         )
-        self.shutdown_btn.set_size(x="250dp", y="75dp")
-        return_btn = kx.XButton(
-            text="Return to client",
-            on_release=self._return_to_client,
-        )
-        return_btn.set_size(x="250dp", y="75dp")
+        self.shutdown_btn.set_size(x="250dp", y="40dp")
         right_frame = kx.XBox(orientation="vertical")
         right_frame.add_widgets(
             config_frame,
+            pubkey_label_hint,
+            self.pubkey_label,
             kx.XAnchor.wrap(self.shutdown_btn),
-            kx.XAnchor.wrap(return_btn),
         )
+        right_frame = kx.XAnchor.wrap(right_frame)
+        right_frame.make_bg(Palette.BG_MAIN)
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, right_frame)
-        self.add_widget(main_frame)
+        wrapped_frame = kx.XAnchor.wrap(main_frame)
+        self.add_widget(wrapped_frame)
 
     def _on_config_invoke(self, w, values):
         self.set_focus()
@@ -113,6 +135,8 @@ class ServerFrame(kx.XAnchor):
             return
         self._running_server = server
         self.shutdown_btn.disabled = False
+        self.pubkey_label.text = server.pubkey
+        self.pubkey_label.disabled = False
         stype = "warning"
         try:
             logger.debug(f"Running {server=}")
@@ -123,6 +147,8 @@ class ServerFrame(kx.XAnchor):
             exit_code = str(e)
             stype = "error"
         self.shutdown_btn.disabled = True
+        self.pubkey_label.text = "No server running."
+        self.pubkey_label.disabled = True
         self._running_server = None
         self.app.set_feedback(f"Server shutdown with exit code: {exit_code}.", stype)
 
