@@ -59,6 +59,7 @@ class ConnectPanel(kx.XAnchor):
         self._on_client = on_client
         self._make_widgets(app_config.info_text, app_config.online_info_text)
         self.app.controller.bind("client.connect.start", self._connect)
+        self.app.controller.set_active_callback("client.connect", self.set_focus)
 
     def _make_widgets(self, info_text, online_info_text):
         self.clear_widgets()
@@ -138,7 +139,6 @@ class ConnectPanel(kx.XAnchor):
             on_invoke=self._connect,
             on_values=self._on_connection_values,
         )
-        self.connection_panel.set_focus("username")
         # Assemble
         main_frame = kx.XBox()
         main_frame.set_size(x=900, y=700)

@@ -91,6 +91,7 @@ class App(kx.XApp):
             log_register=True,
             log_bind=True,
             log_callback=True,
+            log_active=True,
         )
         self._register_controller(self.controller)
         self.game_controller = kx.XHotkeyController(
@@ -98,6 +99,7 @@ class App(kx.XApp):
             log_register=True,
             log_bind=True,
             log_callback=True,
+            log_active=True,
         )
         self._make_widgets(app_config)
         self.hook(self._update, 20)
@@ -157,12 +159,12 @@ class App(kx.XApp):
 
     def _show_client(self, *args):
         self._sm.current = "client"
-        self.controller.set_active("client")
+        self.controller.active = "client"
         self.menu.get_button("app", "host_server").disabled = False
 
     def _show_server(self, *args):
         self._sm.current = "server"
-        self.controller.set_active("server")
+        self.controller.active = "server"
         self.menu.get_button("app", "host_server").disabled = True
 
     def _make_widgets(self, app_config):

@@ -50,24 +50,24 @@ class UserFrame(kx.XAnchor):
     def _show_admin(self, *args):
         self._sm.transition.direction = self._sm.screen_direction("admin")
         self._sm.current = "admin"
-        self.app.controller.set_active("client.admin")
-        self.app.game_controller.set_active(None)
+        self.app.controller.active = "client.admin"
+        self.app.game_controller.active = None
         self.admin_frame.set_focus()
 
     def _show_lobby(self, *args):
         self._sm.transition.direction = self._sm.screen_direction("lobby")
         self._sm.current = "lobby"
-        self.app.controller.set_active("client.lobby")
-        self.app.game_controller.set_active(None)
+        self.app.controller.active = "client.lobby"
+        self.app.game_controller.active = None
         self.lobby_frame.set_focus()
 
     def _make_game(self):
-        self.app.game_controller.set_active("")
+        self.app.game_controller.active = ""
         game_frame = self._game_widget_class(self._client)
         self.game_frame.add_widget(game_frame)
         self._sm.transition.direction = self._sm.screen_direction("game")
         self._sm.current = "game"
-        self.app.controller.set_active("client.game")
+        self.app.controller.active = "client.game"
 
     def _on_game(self, game: Optional[str]):
         logger.info(f"New game: {game}")

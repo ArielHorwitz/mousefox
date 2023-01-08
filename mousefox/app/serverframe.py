@@ -31,6 +31,7 @@ class ServerFrame(kx.XAnchor):
         self._running_server: Optional[pgnet.Server] = None
         self._game_class = app_config.game_class
         self._make_widgets(app_config)
+        self.app.controller.set_active_callback("server", self.set_focus)
 
     def _make_widgets(self, app_config):
         info_label = kx.XLabel(
@@ -127,3 +128,7 @@ class ServerFrame(kx.XAnchor):
 
     def _return_to_client(self, *args):
         self.app.controller.invoke("show_client")
+
+    def set_focus(self, *args):
+        """Focus input widgets."""
+        self._config_panel.set_focus("admin_password")

@@ -23,6 +23,7 @@ class ClientFrame(kx.XAnchor):
         self._make_widgets(app_config)
         self._client: Optional[pgnet.Client] = None
         self.app.menu.set_callback("app", "disconnect", self._disconnect)
+        self.app.controller.set_active_callback("client", self._on_screen)
         self._on_screen()
 
     def update(self, *args):
@@ -49,11 +50,11 @@ class ClientFrame(kx.XAnchor):
             assert self._user_container.content is None
             self.app.menu.get_button("app", "disconnect").disabled = True
             self.app.menu.get_button("app", "leave_game").disabled = True
-            self.app.controller.set_active("client.connect")
+            self.app.controller.active = "client.connect"
             self._connect_panel.set_focus()
         elif self._sm.current == "user":
             self.app.menu.get_button("app", "disconnect").disabled = False
-            self.app.controller.set_active("client.lobby")
+            self.app.controller.active = "client.lobby"
             userframe = self._user_container.content
             if userframe:
                 userframe.set_focus()

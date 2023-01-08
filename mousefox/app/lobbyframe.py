@@ -22,6 +22,7 @@ class LobbyFrame(kx.XAnchor):
         self._make_widgets()
         self.app.controller.bind("client.lobby.focus_create", self._focus_create)
         self.app.controller.bind("client.lobby.focus_list", self._focus_list)
+        self.app.controller.set_active_callback("client.lobby", self._focus_list)
 
     def update(self):
         """Priodically refresh game directory."""

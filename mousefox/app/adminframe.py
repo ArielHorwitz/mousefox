@@ -18,6 +18,7 @@ class AdminFrame(kx.XAnchor):
         super().__init__()
         self._client = client
         self._make_widgets()
+        self.app.controller.set_active_callback("client.admin", self.set_focus)
 
     def _make_widgets(self):
         title = kx.XLabel(text="Admin Panel", bold=True, font_size="36dp")
