@@ -4,6 +4,7 @@ from typing import Optional
 import arrow
 import kvex as kx
 import pgnet
+from .palette import Palette
 
 
 LINE_WIDGET_HEIGHT = 40
@@ -49,7 +50,7 @@ class LobbyFrame(kx.XAnchor):
         # Game list
         title = kx.XLabel(text="[b]Server lobby[/b]", font_size=18)
         title.set_size(y=LINE_WIDGET_HEIGHT)
-        title.make_bg(kx.XColor(v=0, a=0.4))
+        title.make_bg(Palette.BG_BASE2)
         self.games_list = kx.XList(
             items=[""],
             selection_color=(1, 1, 1),
@@ -81,7 +82,7 @@ class LobbyFrame(kx.XAnchor):
             self.game_info_label,
             join_frame,
         )
-        info_panel.make_bg(kx.get_color("lime", v=0.3))
+        info_panel.make_bg(Palette.BG_MAIN)
 
         # Create game
         create_title = kx.XLabel(text="[b]Create new game[/b]")
@@ -100,13 +101,13 @@ class LobbyFrame(kx.XAnchor):
         create_panel_.set_size(y=300)
         create_frame = kx.XBox(orientation="vertical")
         create_frame.add_widgets(create_title, create_panel_)
-        create_frame.make_bg(kx.get_color("pink", v=0.3))
+        create_frame.make_bg(Palette.BG_ALT)
 
         # Assemble
         right_frame = kx.XBox(orientation="vertical")
         right_frame.add_widgets(info_panel, create_frame)
         main_frame = kx.XBox()
-        main_frame.make_bg(kx.get_color("orange", v=0.3))
+        main_frame.make_bg(Palette.BG_BASE)
         main_frame.add_widgets(list_frame, right_frame)
         self.add_widget(main_frame)
 

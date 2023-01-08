@@ -11,6 +11,7 @@ import pgnet
 from .. import util
 from .clientframe import ClientFrame
 from .serverframe import ServerFrame
+from .palette import Palette
 
 
 HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
@@ -185,9 +186,9 @@ class App(kx.XApp):
         top_bar = kx.XBox()
         top_bar.add_widgets(self.menu, self._status)
         top_bar.set_size(y="32dp")
-        top_bar.make_bg(kx.get_color("purple", v=0.2))
+        top_bar.make_bg(Palette.BG_ALT2)
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.make_bg(kx.get_color("purple", v=0.05))
+        main_frame.make_bg(Palette.BG_ALT)
         main_frame.add_widgets(top_bar, self._sm)
         self.root.clear_widgets()
         self.root.add_widget(main_frame)
