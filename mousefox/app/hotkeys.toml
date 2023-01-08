@@ -26,3 +26,4 @@ focus_list = "^ j"
 
 [client.user.admin]
 focus = "^ `"
+debug = ["^ d", "f5"]
