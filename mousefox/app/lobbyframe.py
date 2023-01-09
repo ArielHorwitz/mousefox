@@ -138,7 +138,7 @@ class LobbyFrame(kx.XAnchor):
         self._client.get_game_dir(self._on_game_dir_response)
 
     def _on_game_dir_response(self, game_dir_response: pgnet.Response):
-        self.game_dir = game_dir_response.payload.get("games")
+        self.game_dir = game_dir_response.payload.get("games") or dict()
         games = sorted(self.game_dir.keys()) or [""]
         self.games_list.items = games
         self._show_game()

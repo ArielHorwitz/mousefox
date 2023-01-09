@@ -112,6 +112,10 @@ class ConnectPanel(kx.XAnchor):
                 default=config.address,
                 showing=config.online,
             ),
+            invite_code=kx.XInputPanelWidget(
+                "Invite code",
+                showing=config.online,
+            ),
             advanced=kx.XInputPanelWidget(
                 "Advanced",
                 "bool",
@@ -155,6 +159,7 @@ class ConnectPanel(kx.XAnchor):
         online = get_value("online")
         username = get_value("username")
         password = get_value("password")
+        invite_code = get_value("invite_code")
         address = get_value("address") if online else _ConnectionConfig.address
         port = get_value("port") if advanced else _ConnectionConfig.port
         pubkey = get_value("pubkey") if advanced else _ConnectionConfig.pubkey
@@ -164,6 +169,7 @@ class ConnectPanel(kx.XAnchor):
                 port=port,
                 username=username,
                 password=password,
+                invite_code=invite_code,
                 verify_server_pubkey=pubkey or None,
             )
         else:
@@ -181,7 +187,7 @@ class ConnectPanel(kx.XAnchor):
         online = values["online"]
         advanced = online and values["advanced"]
         self._online_info_label.showing = online
-        for iname in ("password", "address", "advanced"):
+        for iname in ("password", "address", "invite_code", "advanced"):
             self.connection_panel.set_showing(iname, online)
         for iname in ("port", "pubkey"):
             self.connection_panel.set_showing(iname, advanced)
