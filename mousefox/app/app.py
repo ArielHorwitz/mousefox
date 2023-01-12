@@ -202,7 +202,6 @@ class App(kx.XApp):
         self.menu = kx.XButtonBar()
         self.menu.set_size(x="500dp")
         self.menu.add_category("app")
-        self.menu.add_category("game")
         menu_add = self.menu.add_button
         menu_get = self.menu.get_button
         menu_add("app", "quit", self.stop)
