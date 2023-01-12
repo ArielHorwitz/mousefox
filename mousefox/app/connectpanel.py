@@ -89,8 +89,6 @@ class ConnectPanel(kx.XAnchor):
         )
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(info_label, self._online_info_label)
-        left_frame = kx.XAnchor.wrap(left_frame, x=1, y=0.9)
-        left_frame.make_bg(self.app.get_color("main", v=0.75))
         # Connection details
         pwidgets = dict(
             online=kx.XInputPanelWidget(
@@ -136,20 +134,17 @@ class ConnectPanel(kx.XAnchor):
                 showing=False,
             ),
         )
-        self.connection_panel = kx.XInputPanel(
-            pwidgets,
-            invoke_text="Connect",
-        )
+        with self.app.subtheme_context("secondary"):
+            self.connection_panel = kx.XInputPanel(pwidgets, invoke_text="Connect")
+            connection_panel = kx.fwrap(self.connection_panel)
         self.connection_panel.bind(
             on_invoke=self._connect,
             on_values=self._on_connection_values,
         )
         # Assemble
         main_frame = kx.XBox()
-        right_frame = kx.XAnchor.wrap(self.connection_panel)
-        right_frame.make_bg(self.app.get_color("primary", v=0.75))
-        main_frame.add_widgets(left_frame, right_frame)
-        self.add_widget(kx.XAnchor.wrap(main_frame))
+        main_frame.add_widgets(left_frame, kx.pwrap(connection_panel))
+        self.add_widget(kx.fwrap(main_frame))
 
     def _connect(self, *args):
         self.connection_panel.set_focus("username")

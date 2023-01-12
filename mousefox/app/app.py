@@ -38,7 +38,7 @@ class AppConfig:
     """If app should start maximized."""
     borderless: bool = False
     """If app should not have window borders."""
-    size: Optional[tuple[int, int]] = None
+    size: Optional[tuple[int, int]] = (1280, 768)
     """App window size in pixels."""
     offset: Optional[tuple[int, int]] = None
     """App window offset in pixels."""
@@ -116,10 +116,6 @@ class App(kx.XApp):
         await _close_remaining_tasks()
         return r
 
-    def get_color(self, *args, **kwargs) -> kx.XColor:
-        """Wraps `kx.get_color` to use the app's color palette."""
-        return kx.get_color(*args, palette=COLOR_PALETTE, **kwargs)
-
     def set_feedback(
         self,
         text: str,
@@ -190,13 +186,17 @@ class App(kx.XApp):
         top_bar = kx.XBox()
         top_bar.add_widgets(self.menu, self._status)
         top_bar.set_size(y="32dp")
-        top_bar.make_bg(self.get_color("second", v=0.5))
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.make_bg(self.get_color("second", v=0.75))
         main_frame.add_widgets(top_bar, self._sm)
         self.root.clear_widgets()
         self.root.add_widget(main_frame)
+        self._refresh_background()
+        self.bind(theme=self._refresh_background)
         self._show_client()
+
+    def _refresh_background(self, *args):
+        print("theme")
+        self.root.make_bg(self.theme.primary.bg)
 
     def _make_menu(self):
         self.menu = kx.XButtonBar()
@@ -218,6 +218,7 @@ class App(kx.XApp):
         menu_get("app", "lobby").disabled = True
         menu_get("app", "game").disabled = True
         menu_get("app", "admin_panel").disabled = True
+        self.menu.add_theme_selectors(prefix="")
 
     def _register_controller(self, controller: kx.XHotkeyController):
         loaded_dict = util.toml_load(HOTKEYS_FILE)
@@ -232,6 +233,12 @@ class App(kx.XApp):
         controller.bind("debug", controller.debug)
         controller.bind("show_client", self._show_client)
         controller.bind("show_server", self._show_server)
+        for i, tname in enumerate(kx.THEMES.keys()):
+            self.controller.register(
+                f"Change theme to {tname}",
+                f"numpad{i+1}",
+                bind=lambda *a, t=tname: self.set_theme(t),
+            )
 
     def _update(self, *args):
         self._client_frame.update()

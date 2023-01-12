@@ -57,9 +57,8 @@ class ServerFrame(kx.XAnchor):
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(
             info_label,
-            kx.XAnchor.wrap(return_btn),
+            kx.wrap(return_btn),
         )
-        left_frame.make_bg(self.app.get_color("main", v=0.75))
         # Right frame
         config_panel_widgets = {
             "admin_password": kx.XInputPanelWidget(
@@ -74,41 +73,47 @@ class ServerFrame(kx.XAnchor):
                 default=False,
             ),
         }
-        self._config_panel = kx.XInputPanel(
-            config_panel_widgets,
-            invoke_text="Launch server",
-        )
-        self._config_panel.bind(on_invoke=self._on_config_invoke)
-        config_frame = kx.XAnchor.wrap(self._config_panel)
-        config_frame.set_size(hy=5)
-        self.pubkey_label = kx.XInput(
-            text="No server running.",
-            readonly=True,
-            disabled=True,
-            select_on_focus=True,
-            halign="center",
-        )
-        self.pubkey_label.set_size(y="40dp")
-        pubkey_label_hint = kx.XLabel(text="Server pubkey:")
-        pubkey_label_hint.set_size(y="40dp")
-        self.shutdown_btn = kx.XButton(
-            text="Shutdown server",
-            on_release=self._shutdown_server,
-            disabled=True,
-        )
-        self.shutdown_btn.set_size(x="250dp", y="40dp")
-        right_frame = kx.XBox(orientation="vertical")
-        right_frame.add_widgets(
-            config_frame,
-            pubkey_label_hint,
-            self.pubkey_label,
-            kx.XAnchor.wrap(self.shutdown_btn),
-        )
-        right_frame = kx.XAnchor.wrap(right_frame)
-        right_frame.make_bg(self.app.get_color("primary", v=0.75))
+        with self.app.subtheme_context("secondary"):
+            self._config_panel = kx.XInputPanel(
+                config_panel_widgets,
+                invoke_text="Launch server",
+            )
+            self._config_panel.bind(on_invoke=self._on_config_invoke)
+            config_frame = kx.pwrap(self._config_panel)
+            with self.app.subtheme_context("accent"):
+                self.pubkey_label = kx.XInput(
+                    text="No server running.",
+                    readonly=True,
+                    disabled=True,
+                    select_on_focus=True,
+                    halign="center",
+                    subtheme_name="secondary",
+                )
+                self.pubkey_label.set_size(y="40dp")
+                pubkey_label_hint = kx.XLabel(text="Server pubkey:")
+                pubkey_label_hint.set_size(y="40dp")
+                # with self.app.subtheme_context("primary"):
+                self.shutdown_btn = kx.XButton(
+                    text="Shutdown server",
+                    on_release=self._shutdown_server,
+                    disabled=True,
+                )
+                self.shutdown_btn.set_size(x="250dp", y="40dp")
+                running_frame = kx.XBox(orientation="vertical")
+                running_frame.add_widgets(
+                    pubkey_label_hint,
+                    kx.pwrap(self.pubkey_label),
+                    kx.wrap(self.shutdown_btn),
+                )
+                running_frame = kx.fpwrap(running_frame)
+                running_frame.set_size(y="200sp")
+            right_frame = kx.XBox(orientation="vertical")
+            right_frame.add_widgets(config_frame, running_frame)
+            right_frame = kx.fpwrap(right_frame)
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, right_frame)
-        wrapped_frame = kx.XAnchor.wrap(main_frame)
+        # self.add_widget(main_frame)
+        wrapped_frame = kx.fpwrap(main_frame)
         self.add_widget(wrapped_frame)
 
     def _on_config_invoke(self, w, values):
