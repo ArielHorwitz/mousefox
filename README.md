@@ -1,7 +1,8 @@
 # MouseFox
 
 MouseFox works like a GUI launcher for pgnet games using
-[kvex](https://github.com/ArielHorwitz/kvex), an extension for kivy.
+[kvex](https://github.com/ArielHorwitz/kvex), an extension for kivy. Be sure to join
+our [community discord server](https://discord.gg/fhg8HcM3rc).
 
 ## Built-in examples
 Tic-tac-toe:
