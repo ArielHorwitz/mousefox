@@ -1,13 +1,33 @@
 """.. include:: ../README.md
 
-## Getting started
-To work with MouseFox, you should be a little familiar with
-[pgnet](https://github.com/ArielHorwitz/pgnet) and [kivy](https://kivy.org/doc/stable/).
+# Install
+```bash
+pip install git+https://github.com/ArielHorwitz/mousefox.git
+```
+
+# Built-in examples
+Tic-tac-toe:
+```python3
+import mousefox
+
+mousefox.examples.tictactoe()
+```
+
+Text chat:
+```python3
+import mousefox
+
+mousefox.examples.chat()
+```
+
+# Getting started
+When working with MouseFox, we will become familiar with
+[PGNet](https://github.com/ArielHorwitz/pgnet) and [Kivy](https://kivy.org/doc/stable/).
 Let's walk through making a simple multiplayer clicker game.
 
-### Game logic
-We require a pgnet `Game` class. This class will be initialized with the game name
-whenever a user creates a new game by the server:
+## Game logic
+We require a `pgnet.Game` class. This class will be initialized by the server whenever a
+user creates a new game:
 ```python3
 import pgnet
 
@@ -25,9 +45,9 @@ class ClickerGame(pgnet.Game):
         return pgnet.Response("Clicked.")
 ```
 
-### Game widget
-We require a kivy `Widget` class. This class will be initialized with the pgnet client
-whenever the user joins a game by the GUI.
+## Game widget
+We require a Kivy `Widget` class. This class will be initialized by the GUI whenever the
+user joins a game.
 ```python3
 from kivy.uix.label import Label
 import pgnet
@@ -49,7 +69,7 @@ class ClickerWidget(Label):
             self.client.send(pgnet.Packet("Click"))
 ```
 
-### Running the app
+## Running the app
 We can now call `mousefox.run` to run the app:
 ```python3
 import mousefox
@@ -60,9 +80,8 @@ mousefox.run(
 )
 ```
 
-Check out the
-[examples](https://github.com/ArielHorwitz/mousefox/tree/master/mousefox/examples/)
-source code to see more examples.
+Check out the examples
+[source code](https://github.com/ArielHorwitz/mousefox/tree/master/mousefox/examples/).
 """  # noqa: D415
 
 

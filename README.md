@@ -1,20 +1,7 @@
 # MouseFox
 
-MouseFox works like a GUI launcher for pgnet games using
-[kvex](https://github.com/ArielHorwitz/kvex), an extension for kivy. Be sure to join
-our [community discord server](https://discord.gg/fhg8HcM3rc).
+MouseFox is a framework for building turn-based multiplayer games in Python with minimum
+boilerplate.
 
-## Built-in examples
-Tic-tac-toe:
-```python3
-import mousefox
-
-mousefox.examples.tictactoe()
-```
-
-Text chat:
-```python3
-import mousefox
-
-mousefox.examples.chat()
-```
+See the [documentation](https://ariel.ninja/mousefox) for details, and be sure to join
+the [community discord server](https://discord.gg/fhg8HcM3rc).

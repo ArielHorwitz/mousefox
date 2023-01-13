@@ -1,0 +1,42 @@
+{% extends "default/index.html.jinja2" %}
+
+{% block title %}MouseFox API{% endblock %}
+
+{% block nav %}
+    <img style="vertical-align:middle;" src="https://ariel.ninja/mousefox/icon.png"
+        alt="MouseFox logo"/>
+    <div style="vertical-align:middle; display:inline; font-size:2em;">MouseFox</div>
+    <input type="search" placeholder="Search..." role="searchbox" aria-label="search"
+                   pattern=".+" required>
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <main class="pdoc">
+    {% filter to_html %}
+
+# MouseFox
+
+MouseFox is a framework for building turn-based multiplayer games in Python with minimum
+boilerplate. [Start here!](mousefox.html)
+
+<p style="text-align: center;">
+<img src="banner.png" width="400" height="200" alt="MouseFox banner"/>
+</p>
+
+The MouseFox project includes the [PGNet](https://github.com/ArielHorwitz/pgnet) library
+for multiplayer networking, the [Kvex](https://github.com/ArielHorwitz/kvex) library (a
+[Kivy](https://kivy.org/) extention) for the GUI, and
+[MouseFox](https://github.com/ArielHorwitz/mousefox) as a complete framework.
+
+## Documentation and API Reference
+This documentation includes docs and API reference for each of these libraries:
+- [mousefox](mousefox.html)
+- [pgnet](pgnet.html)
+- [kvex](kvex.html)
+
+    {% endfilter %}
+    </main>
+    {% include "search.html.jinja2" %}
+{% endblock %}
+
