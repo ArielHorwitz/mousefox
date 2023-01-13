@@ -1,7 +1,4 @@
-"""Example Tic-tac-toe game for MouseFox.
-
-Provides `APP_CONFIG` dictionary to pass keyword arguments for `mousefox.run`.
-"""
+"""Example Tic-tac-toe game for MouseFox."""
 
 from typing import Optional
 import arrow

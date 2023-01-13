@@ -1,7 +1,4 @@
-"""Example Chat room for MouseFox.
-
-Provides `APP_CONFIG` dictionary to pass keyword arguments for `mousefox.run`.
-"""
+"""Example Chat room for MouseFox."""
 
 import arrow
 import json
