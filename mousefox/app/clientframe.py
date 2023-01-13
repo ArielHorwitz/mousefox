@@ -91,9 +91,10 @@ class ClientFrame(kx.XAnchor):
         client.on_connection = None
         self._sm.current = "user"
 
-    def _on_client_status(self, client: pgnet.Client, status: str):
+    def _on_client_status(self, client: pgnet.Client, status_message: str):
         assert client is self._client
-        self.app.set_feedback(status, "normal" if client.connected else "error")
+        status = pgnet.Status.OK if client.connected else pgnet.Status.BAD
+        self.app.set_feedback(status_message, status)
 
     def _disconnect(self, *args):
         if not self._client:

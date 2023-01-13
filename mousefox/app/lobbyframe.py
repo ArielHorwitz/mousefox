@@ -59,8 +59,9 @@ class LobbyFrame(kx.XAnchor):
             on_invoke=self._on_game_invoke,
             selection=self._show_game,
         )
-        list_frame = kx.XBox(orientation="vertical")
-        list_frame.add_widgets(title, self.games_list)
+        list_box = kx.XBox(orientation="vertical")
+        list_box.add_widgets(title, self.games_list)
+        list_frame = kx.pwrap(kx.fpwrap(list_box))
 
         # Game info
         join_iwidgets = dict(password=kx.XInputPanelWidget("Password", "password"))
@@ -81,7 +82,9 @@ class LobbyFrame(kx.XAnchor):
                 self.game_info_label,
                 self.join_panel,
             )
-            info_panel = kx.fpwrap(info_panel)
+            right_box = kx.XBox(orientation="vertical")
+            right_box.add_widget(kx.pwrap(info_panel))
+            right_frame = kx.fwrap(right_box)
 
         # Create game
         pwidgets = dict(
@@ -97,16 +100,16 @@ class LobbyFrame(kx.XAnchor):
                 reset_text="",
             )
             self.create_panel.bind(on_invoke=self._create_game)
-            create_panel_ = kx.fpwrap(self.create_panel)
-            create_panel_.set_size(y="200dp")
-        create_frame = kx.XBox(orientation="vertical")
-        create_frame.add_widgets(create_title, create_panel_)
+            self.create_panel.set_size(y="200dp")
+            create_box = kx.XBox(orientation="vertical")
+            create_box.add_widgets(create_title, self.create_panel)
+            create_frame = kx.pwrap(kx.fpwrap(create_box))
+            create_frame.set_size(y=self.create_panel.height + create_title.height)
+            right_box.add_widget(create_frame)
 
         # Assemble
-        right_frame = kx.XBox(orientation="vertical")
-        right_frame.add_widgets(info_panel, create_frame)
         main_frame = kx.XBox()
-        main_frame.add_widgets(list_frame, right_frame)
+        main_frame.add_widgets(list_frame, kx.pwrap(right_frame))
         self.add_widget(main_frame)
 
     def _create_game(self, *args):
@@ -155,7 +158,18 @@ class LobbyFrame(kx.XAnchor):
         users = game.get("users")
         passprot = game.get("password_protected")
         password = "[i]Password protected.[/i]" if passprot else ""
-        text = f"[b]{name}[/b]\n\n{users} users in game.\n\n{password}"
+        ginfo = game.get("info")
+        if ginfo:
+            ginfo = kx.escape_markup(ginfo)
+        else:
+            ginfo = "[i]No game information available.[/i]"
+        text = "\n\n".join([
+            f"[b]{name}[/b]",
+            f"{users} users in game.",
+            password,
+            "[u]Game info[/u]",
+            ginfo,
+        ])
         self.game_info_label.text = text
         self.join_panel.set_showing("password", passprot)
 

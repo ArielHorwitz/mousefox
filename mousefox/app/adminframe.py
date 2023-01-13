@@ -10,9 +10,9 @@ import pprint
 
 _STATUSES = {s.value: s for s in pgnet.Status}
 _STATUS_COLORS = {
-    pgnet.Status.OK.value: "00ff00",
-    pgnet.Status.UNEXPECTED.value: "bbbb00",
-    pgnet.Status.BAD.value: "ff0000",
+    pgnet.Status.OK.value: kx.XColor.from_hex("00ff00"),
+    pgnet.Status.UNEXPECTED.value: kx.XColor.from_hex("bbbb00"),
+    pgnet.Status.BAD.value: kx.XColor.from_hex("ff0000"),
 }
 
 
@@ -152,7 +152,7 @@ class AdminFrame(kx.XAnchor):
 
     def _response_callback(self, response: pgnet.Response):
         status = _STATUSES[response.status]
-        status_color = kx.XColor.from_hex(_STATUS_COLORS[status])
+        status_color = _STATUS_COLORS[status]
         timestr = arrow.get(response.created_on).to("local").format("HH:mm:ss MMM DD")
         statusstr = f"{status.name} ({status.value})"
         debug_strs = [

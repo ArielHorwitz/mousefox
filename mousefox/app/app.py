@@ -1,6 +1,6 @@
 """MouseFox GUI app."""
 
-from typing import Optional, Literal, Type, Callable
+from typing import Optional, Type, Callable
 from loguru import logger
 import asyncio
 from dataclasses import dataclass
@@ -116,28 +116,16 @@ class App(kx.XApp):
         await _close_remaining_tasks()
         return r
 
-    def set_feedback(
-        self,
-        text: str,
-        stype: Literal["normal", "warning", "error"] = "normal",
-        /,
-    ):
+    def set_feedback(self, text: str, status: pgnet.Status = pgnet.Status.OK, /):
         """Set feedback in the status bar.
 
         Args:
             text: Text to show.
             stype: Status type, used for colors.
         """
+        color = _STATUS_COLORS[status]
+        self._status.color = color.rgba
         self._status.text = text
-        if stype == "normal":
-            color = 0.8, 0.8, 0.8
-        elif stype == "warning":
-            color = 1, 0.4, 0
-        elif stype == "error":
-            color = 1, 0.2, 0.2
-        else:
-            raise ValueError("Unknown status type.")
-        self._status.color = color
 
     def feedback_response(
         self,
@@ -153,12 +141,7 @@ class App(kx.XApp):
         """
         if only_statuses and response.status == pgnet.Status.OK:
             return
-        stypes = {
-            pgnet.Status.OK: "normal",
-            pgnet.Status.UNEXPECTED: "warning",
-            pgnet.Status.BAD: "error",
-        }
-        self.set_feedback(response.message, stypes[response.status])
+        self.set_feedback(response.message, response.status)
 
     def _show_client(self, *args):
         self._sm.current = "client"
@@ -172,7 +155,13 @@ class App(kx.XApp):
 
     def _make_widgets(self, app_config):
         self._make_menu()
-        self._status = kx.XLabel(halign="left", italic=True, padding=(10, 0))
+        self._status = kx.XLabel(
+            halign="left",
+            italic=True,
+            padding=(10, 10),
+            outline_color=(0, 0, 0),
+            outline_width=3,
+        )
         self._client_frame = ClientFrame(app_config)
         self._server_frame = ServerFrame(app_config)
         self._sm = kx.XScreenManager.from_widgets(
@@ -183,11 +172,11 @@ class App(kx.XApp):
             transition=kx.FadeTransition(duration=0.2),
         )
         # Assemble
-        top_bar = kx.XBox()
-        top_bar.add_widgets(self.menu, self._status)
-        top_bar.set_size(y="32dp")
+        self.top_bar = kx.XBox()
+        self.top_bar.add_widgets(self.menu, self._status)
+        self.top_bar.set_size(y="32dp")
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.add_widgets(top_bar, self._sm)
+        main_frame.add_widgets(self.top_bar, self._sm)
         self.root.clear_widgets()
         self.root.add_widget(main_frame)
         self._refresh_background()
@@ -277,3 +266,10 @@ async def _close_remaining_tasks(debug: bool = True):
                     + "\n".join(f"  -- {t}" for t in remaining_tasks)
                 )
             continue
+
+
+_STATUS_COLORS = {
+    pgnet.Status.OK.value: kx.XColor.from_hex("00bb00"),
+    pgnet.Status.UNEXPECTED.value: kx.XColor.from_hex("bbbb00"),
+    pgnet.Status.BAD.value: kx.XColor.from_hex("ff0000"),
+}

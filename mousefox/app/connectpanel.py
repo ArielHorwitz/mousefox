@@ -144,7 +144,7 @@ class ConnectPanel(kx.XAnchor):
         # Assemble
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, kx.pwrap(connection_panel))
-        self.add_widget(kx.fwrap(main_frame))
+        self.add_widget(kx.pwrap(kx.fwrap(main_frame)))
 
     def _connect(self, *args):
         self.connection_panel.set_focus("username")

@@ -10,8 +10,8 @@ import pgnet
 INFO_TEXT = (
     "[size=20dp][b][u]Hosting a server[/u][/b][/size]"
     "\n\n"
-    "[color=#ffbbbb][i]Please consider your network security before running a"
-    " server[/i][/color]."
+    "[b][i]Please consider your network security before running a"
+    " server[/i][/b]."
     "\n\n"
     "For best performance, run the server in a separate instance."
     " You may be required to configure port forwarding on your network device before"
@@ -112,9 +112,7 @@ class ServerFrame(kx.XAnchor):
             right_frame = kx.fpwrap(right_frame)
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, right_frame)
-        # self.add_widget(main_frame)
-        wrapped_frame = kx.fpwrap(main_frame)
-        self.add_widget(wrapped_frame)
+        self.add_widget(kx.pwrap(kx.fpwrap(main_frame)))
 
     def _on_config_invoke(self, w, values):
         self.set_focus()
@@ -129,32 +127,33 @@ class ServerFrame(kx.XAnchor):
 
     async def _run_server(self, server_kwargs: dict):
         if self._running_server is not None:
-            self.app.set_feedback("Server already running.", "warning")
+            self.app.set_feedback("Server already running.", pgnet.Status.UNEXPECTED)
             return
         try:
             server = pgnet.Server(self._game_class, **server_kwargs)
         except Exception as e:
             logger.warning(e)
-            self.app.set_feedback(str(e), "warning")
+            self.app.set_feedback(str(e), pgnet.Status.UNEXPECTED)
             return
         self._running_server = server
         self.shutdown_btn.disabled = False
         self.pubkey_label.text = server.pubkey
         self.pubkey_label.disabled = False
-        stype = "warning"
         try:
             logger.debug(f"Running {server=}")
             exit_code: int = await server.async_run(on_start=self._on_server_start)
             logger.debug(f"Shutdown {server=}")
+            shutdown_message = f"Server shutdown with exit code {exit_code}"
+            status = pgnet.Status.UNEXPECTED
         except Exception as e:
             logger.warning(e)
-            exit_code = str(e)
-            stype = "error"
+            shutdown_message = "Server failed (see logs)"
+            status = pgnet.Status.BAD
         self.shutdown_btn.disabled = True
         self.pubkey_label.text = "No server running."
         self.pubkey_label.disabled = True
         self._running_server = None
-        self.app.set_feedback(f"Server shutdown with exit code: {exit_code}.", stype)
+        self.app.set_feedback(shutdown_message, status)
 
     def _on_server_start(self, *args):
         self.app.set_feedback("Server running.")
