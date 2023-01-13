@@ -51,6 +51,11 @@ class Game(pgnet.Game):
         expired = time_since_last_message > 7200  # Over 2 hours
         return not expired
 
+    def get_lobby_info(self) -> str:
+        """Override base method."""
+        mtime = arrow.get(self.message_log[-1].time).to("utc").format("HH:mm:ss")
+        return f"Last message: {mtime} (UTC)"
+
     def user_joined(self, username: str):
         """Override base method."""
         self.users.add(username)
@@ -128,7 +133,7 @@ class GameWidget(kx.XAnchor):
         text_lines = []
         for raw_message in heartbeat_response.payload["messages"]:
             message = Message.deserialize(raw_message)
-            time = arrow.get(message.time).format("HH:MM:SS")
+            time = arrow.get(message.time).to("local").format("HH:mm:ss")
             color = "77ff77" if message.username == self.client._username else "ff7777"
             text_lines.append(f"[color=#{color}]{time} | {message.username}[/color]")
             text_lines.append(f"[color=#666666]>>>[/color] {message.text}")
