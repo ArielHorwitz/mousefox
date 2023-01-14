@@ -75,6 +75,7 @@ class AdminFrame(kx.XAnchor):
             padding=(10, 10),
             halign="left",
             valign="top",
+            fixed_width=True,
         )
         response_label_frame = kx.XScroll(view=self.response_label)
         with self.app.subtheme_context("secondary"):
@@ -83,9 +84,9 @@ class AdminFrame(kx.XAnchor):
                 padding=(10, 10),
                 halign="left",
                 valign="top",
+                fixed_width=True,
             )
-            view = kx.fpwrap(self.debug_label)
-        debug_label_frame = kx.XScroll(view=view)
+        debug_label_frame = kx.XScroll(view=self.debug_label)
         debug_label_frame.set_size(x="300dp")
         # Assemble
         self.requests_frame.set_size(x="300dp")
