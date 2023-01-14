@@ -107,6 +107,7 @@ class App(kx.XApp):
         self._make_widgets(app_config)
         self.hook(self._update, 20)
         self.set_feedback("Welcome")
+        self.bind(theme=self._on_theme)
 
     async def async_run(self):
         """Override base method."""
@@ -121,7 +122,7 @@ class App(kx.XApp):
 
         Args:
             text: Text to show.
-            stype: Status type, used for colors.
+            status: pgnet.Status, used for colors.
         """
         color = _STATUS_COLORS[status]
         self._status.color = color.rgba
@@ -157,10 +158,12 @@ class App(kx.XApp):
         self._make_menu()
         self._status = kx.XLabel(
             halign="left",
+            valign="middle",
             italic=True,
             padding=(10, 10),
+            outline_width=2,
             outline_color=(0, 0, 0),
-            outline_width=3,
+            font_size="18sp",
         )
         self._client_frame = ClientFrame(app_config)
         self._server_frame = ServerFrame(app_config)
@@ -174,7 +177,7 @@ class App(kx.XApp):
         # Assemble
         self.top_bar = kx.XBox()
         self.top_bar.add_widgets(self.menu, self._status)
-        self.top_bar.set_size(y="32dp")
+        self.top_bar.set_size(y="32sp")
         main_frame = kx.XBox(orientation="vertical")
         main_frame.add_widgets(self.top_bar, self._sm)
         self.root.clear_widgets()
@@ -182,6 +185,9 @@ class App(kx.XApp):
         self._refresh_background()
         self.bind(theme=self._refresh_background)
         self._show_client()
+
+    def _on_theme(self, *args):
+        self.set_feedback(f"Set theme: {self.theme_name}")
 
     def _refresh_background(self, *args):
         print("theme")
