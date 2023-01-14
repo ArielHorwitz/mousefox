@@ -32,8 +32,8 @@ class AdminFrame(kx.XAnchor):
 
     def _make_widgets(self):
         with self.app.subtheme_context("accent"):
-            title = kx.fwrap(kx.XLabel(text="Admin Panel", bold=True, font_size="36dp"))
-            title.set_size(y="40dp")
+            title = kx.fwrap(kx.XLabel(text="Admin Panel", bold=True, font_size="36sp"))
+            title.set_size(y="40sp")
         # Requests frame
         requests_placeholder = kx.XPlaceholder(
             button_text="Get requests",
@@ -78,15 +78,14 @@ class AdminFrame(kx.XAnchor):
             fixed_width=True,
         )
         response_label_frame = kx.XScroll(view=self.response_label)
-        with self.app.subtheme_context("secondary"):
-            self.debug_label = kx.XLabel(
-                font_name="RobotoMono-Regular",
-                padding=(10, 10),
-                halign="left",
-                valign="top",
-                fixed_width=True,
-            )
-        debug_label_frame = kx.XScroll(view=self.debug_label)
+        self.debug_label = kx.XLabel(
+            font_name="RobotoMono-Regular",
+            padding=(10, 10),
+            halign="left",
+            valign="top",
+            fixed_width=True,
+        )
+        debug_label_frame = kx.fwrap(kx.XScroll(view=self.debug_label))
         debug_label_frame.set_size(x="300dp")
         # Assemble
         self.requests_frame.set_size(x="300dp")
@@ -97,7 +96,7 @@ class AdminFrame(kx.XAnchor):
             self.requests_frame,
         )
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.add_widgets(title, bottom_frame)
+        main_frame.add_widgets(title, kx.pwrap(bottom_frame))
         self.add_widget(kx.fpwrap(main_frame))
 
     def _refresh_requests(self):
