@@ -67,6 +67,11 @@ class ServerFrame(kx.XAnchor):
             ),
             "save_file": kx.XInputPanelWidget("Save file:", 'str'),
             "port": kx.XInputPanelWidget("Port:", 'int', pgnet.util.DEFAULT_PORT),
+            "open_registration": kx.XInputPanelWidget(
+                "Open user registration:",
+                widget="bool",
+                default=True,
+            ),
             "require_user_password": kx.XInputPanelWidget(
                 "Require user password:",
                 widget="bool",
@@ -92,7 +97,6 @@ class ServerFrame(kx.XAnchor):
                 self.pubkey_label.set_size(y="40dp")
                 pubkey_label_hint = kx.XLabel(text="Server pubkey:")
                 pubkey_label_hint.set_size(y="40dp")
-                # with self.app.subtheme_context("primary"):
                 self.shutdown_btn = kx.XButton(
                     text="Shutdown server",
                     on_release=self._shutdown_server,
@@ -121,6 +125,7 @@ class ServerFrame(kx.XAnchor):
             admin_password=values["admin_password"],
             save_file=values["save_file"] or None,
             port=values["port"],
+            registration_enabled=values["open_registration"],
             require_user_password=values["require_user_password"],
         )
         asyncio.create_task(self._run_server(server_kwargs))
