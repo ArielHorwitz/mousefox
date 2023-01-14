@@ -76,19 +76,23 @@ class ConnectPanel(kx.XAnchor):
             valign="top",
             halign="left",
             padding=(10, 10),
+            fixed_width=True,
         )
         online_info_label = kx.XLabel(
             text=online_info_text,
             valign="top",
             halign="left",
             padding=(10, 10),
+            fixed_width=True,
         )
         self._online_info_label = kx.XCurtain(
             content=online_info_label,
             showing=config.online,
         )
+        left_labels = kx.XDBox()
+        left_labels.add_widgets(info_label, self._online_info_label)
         left_frame = kx.XBox(orientation="vertical")
-        left_frame.add_widgets(info_label, self._online_info_label)
+        left_frame.add_widgets(left_labels, kx.XAnchor())
         # Connection details
         pwidgets = dict(
             online=kx.XInputPanelWidget(
@@ -143,7 +147,7 @@ class ConnectPanel(kx.XAnchor):
         )
         # Assemble
         main_frame = kx.XBox()
-        main_frame.add_widgets(left_frame, kx.pwrap(connection_panel))
+        main_frame.add_widgets(kx.pwrap(left_frame), kx.pwrap(connection_panel))
         self.add_widget(kx.pwrap(kx.fwrap(main_frame)))
 
     def _connect(self, *args):
