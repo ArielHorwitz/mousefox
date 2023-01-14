@@ -1,27 +1,55 @@
 {% extends "default/index.html.jinja2" %}
 
-{% block title %}MouseFox API{% endblock %}
+{% block title %}MouseFox Project{% endblock %}
+
+{% block head %}
+<div class="pdoc" style="display:flex; justify-content:space-between; width:100%;
+    background:#222; position:fixed; top:0; z-index:100; height:2.5em;">
+
+    <a href="" style="color:#936c00; padding-left:1em;">
+        <img style="vertical-align:middle;"
+            src="https://ariel.ninja/mousefox/icon.png"
+            alt="[MouseFox logo]"/>
+        <div style="vertical-align:middle; display:inline; font-size:1.5em;">
+        The MouseFox Project
+        </div>
+    </a>
+
+    {# Community #}
+    <a href="https://discord.gg/fhg8HcM3rc" style="color:#5865F2; padding:0.4em;">
+        <div style="vertical-align:middle; display:inline;">
+        Join The Community Discord Server
+        </div>
+        <img style="vertical-align:middle; display:inline;"
+            height="24em"
+            src="https://ariel.ninja/res/discord.png"
+            alt="[Discord logo]"/>
+    </a>
+
+</div>
+{% endblock %}
 
 {% block nav %}
-    <img style="vertical-align:middle;" src="https://ariel.ninja/mousefox/icon.png"
-        alt="MouseFox logo"/>
-    <div style="vertical-align:middle; display:inline; font-size:2em;">MouseFox</div>
+    {# Use <p> instead of <div> otherwise padding breaks #}
+    <p class="margin_from_header">
     <input type="search" placeholder="Search..." role="searchbox" aria-label="search"
                    pattern=".+" required>
     {{ super() }}
+    </p>
 {% endblock %}
 
 {% block content %}
+    <div class="margin_from_header">
     <main class="pdoc">
     {% filter to_html %}
-
-# MouseFox
+# The MouseFox Project
 
 MouseFox is a framework for building turn-based multiplayer games in Python with minimum
-boilerplate. [Start here!](mousefox.html)
+boilerplate. [Start here!](mousefox.html#install)
 
 <p style="text-align: center;">
-<img src="banner.png" width="400" height="200" alt="MouseFox banner"/>
+<img src="https://ariel.ninja/mousefox/banner.png"
+    width="400" height="200" alt="[MouseFox banner]"/>
 </p>
 
 The MouseFox project includes the [PGNet](https://github.com/ArielHorwitz/pgnet) library
@@ -34,9 +62,8 @@ This documentation includes docs and API reference for each of these libraries:
 - [mousefox](mousefox.html)
 - [pgnet](pgnet.html)
 - [kvex](kvex.html)
-
     {% endfilter %}
-    </main>
     {% include "search.html.jinja2" %}
+    </main>
+    </div>
 {% endblock %}
-

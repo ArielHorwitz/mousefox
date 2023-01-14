@@ -18,3 +18,8 @@
     --def: #0cdd0c;
     --annotation: #00c037;
 }
+
+.margin_from_header {
+    margin-top: 1.5em;
+    padding-bottom: 1.5em;
+}
