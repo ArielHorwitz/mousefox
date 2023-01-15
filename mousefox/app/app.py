@@ -107,7 +107,6 @@ class App(kx.XApp):
         self._make_widgets(app_config)
         self.hook(self._update, 20)
         self.set_feedback("Welcome")
-        self.bind(theme=self._on_theme)
 
     async def async_run(self):
         """Override base method."""
@@ -183,14 +182,14 @@ class App(kx.XApp):
         self.root.clear_widgets()
         self.root.add_widget(main_frame)
         self._refresh_background()
-        self.bind(theme=self._refresh_background)
         self._show_client()
 
-    def _on_theme(self, *args):
+    def on_theme(self, *args):
+        """Override base method."""
         self.set_feedback(f"Set theme: {self.theme_name}")
+        self._refresh_background()
 
     def _refresh_background(self, *args):
-        print("theme")
         self.root.make_bg(self.theme.primary.bg)
 
     def _make_menu(self):
@@ -227,7 +226,7 @@ class App(kx.XApp):
         controller.bind("debug", controller.debug)
         controller.bind("show_client", self._show_client)
         controller.bind("show_server", self._show_server)
-        for i, tname in enumerate(kx.THEMES.keys()):
+        for i, tname in enumerate(kx.THEME_NAMES):
             self.controller.register(
                 f"Change theme to {tname}",
                 f"numpad{i+1}",

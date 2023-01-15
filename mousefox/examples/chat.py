@@ -95,70 +95,91 @@ class Game(pgnet.Game):
         return hash(data)
 
 
-class GameWidget(kx.XAnchor):
-    """Tic-tac-toe GUI widget."""
+AWAITING_DATA_TEXT = "Awaiting data from server..."
+
+
+class GameWidget(kx.XFrame):
+    """Chat GUI widget."""
 
     def __init__(self, client: pgnet.Client, **kwargs):
         """Override base method."""
         super().__init__(**kwargs)
         self.client = client
-        self._update_hash = None
+        self._game_data = dict(
+            update_hash=None,
+            room_name=AWAITING_DATA_TEXT,
+            users=[],
+            messages=[Message("system", AWAITING_DATA_TEXT).serialize()],
+        )
         self._make_widgets()
         client.on_heartbeat = self.on_heartbeat
         client.heartbeat_payload = self.heartbeat_payload
 
+    def on_subtheme(self, *args, **kwargs):
+        """Refresh widgets."""
+        super().on_subtheme(*args, **kwargs)
+        self._refresh_widgets()
+
     def heartbeat_payload(self) -> dict:
         """Override base method."""
-        data = dict(update_hash=self._update_hash)
-        return data
+        return dict(update_hash=self._game_data["update_hash"])
 
     def on_heartbeat(self, heartbeat_response: pgnet.Response):
         """Override base method."""
-        update_hash = heartbeat_response.payload.get("update_hash")
-        if not update_hash or self._update_hash == update_hash:
+        server_hash = heartbeat_response.payload.get("update_hash")
+        our_hash = self._game_data["update_hash"]
+        if not server_hash or our_hash == server_hash:
             return
-        self._update_hash = update_hash
-        room_name = heartbeat_response.payload["room_name"]
-        users = set(heartbeat_response.payload["users"])
+        self._game_data = heartbeat_response.payload
+        self._refresh_widgets()
+
+    def _refresh_widgets(self, *args):
+        room_name = self._game_data["room_name"]
+        users = set(self._game_data["users"])
+        info_fg2 = self.app.theme.secondary.fg2.markup
+        bullet = self.app.theme.secondary.accent2.markup("•")
         self.info_panel.text = "\n".join([
+            f"[u][b]Chat Room[/b][/u]\n[i]{info_fg2(room_name)}[/i]",
             "\n",
-            f"[u]Chat Room:[/u] [i]{room_name}[/i]",
-            "\n",
-            "[u]Users:[/u]",
-            *(f" -- {user}" for user in users),
+            "[u][b]Users[/b][/u]",
+            *(f" {bullet} {info_fg2(user)}" for user in users),
         ])
         text_lines = []
-        for raw_message in heartbeat_response.payload["messages"]:
+        chevron = self.subtheme.accent1.markup(">>>")
+        for raw_message in self._game_data["messages"]:
             message = Message.deserialize(raw_message)
             time = arrow.get(message.time).to("local").format("HH:mm:ss")
-            color = "77ff77" if message.username == self.client._username else "ff7777"
-            text_lines.append(f"[color=#{color}]{time} | {message.username}[/color]")
-            text_lines.append(f"[color=#666666]>>>[/color] {message.text}")
+            is_author = message.username == self.client._username
+            color = kx.XColor.from_hex("77ff77" if is_author else "ff7777")
+            text_lines.append(color.markup(f"[u]{time} | {message.username}[/u]"))
+            text_lines.append(f"{chevron} {message.text}")
         self.messages_label.text = "\n".join(text_lines)
 
     def _make_widgets(self):
-        self.info_panel = kx.XLabel(
-            text="Getting chat room info...",
-            halign="left",
-            valign="top",
-            padding=(10, 5),
-        )
-        self.info_panel.set_size(x="200dp")
+        with self.app.subtheme_context("secondary"):
+            self.info_panel = kx.XLabel(
+                text="Getting chat room info...",
+                halign="left",
+                valign="top",
+            )
+            info_frame = kx.pwrap(kx.fwrap(kx.pwrap(self.info_panel)))
+            info_frame.set_size(hx=0.3)
         self.messages_label = kx.XLabel(
             text="Getting chat messages...",
             halign="left",
             valign="bottom",
-            padding=(10, 5),
             fixed_width=True,
         )
-        self.message_input = kx.XInput(on_text_validate=self._message_validate)
-        self.message_input.set_size(y=100)
-        self.message_input.focus = True
+        with self.app.subtheme_context("accent"):
+            self.message_input = kx.XInput(on_text_validate=self._message_validate)
+            self.message_input.focus = True
+            input_frame = kx.pwrap(kx.fwrap(self.message_input))
+            input_frame.set_size(y="55dp")
+        messages_frame = kx.pwrap(kx.XScroll(self.messages_label))
         chat_frame = kx.XBox(orientation="vertical")
-        messages_frame = kx.XScroll(view=self.messages_label)
-        chat_frame.add_widgets(messages_frame, self.message_input)
+        chat_frame.add_widgets(messages_frame, input_frame)
         main_frame = kx.XBox()
-        main_frame.add_widgets(self.info_panel, chat_frame)
+        main_frame.add_widgets(info_frame, kx.pwrap(chat_frame))
         self.clear_widgets()
         self.add_widget(main_frame)
 

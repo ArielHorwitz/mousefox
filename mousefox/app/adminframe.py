@@ -16,7 +16,7 @@ _STATUS_COLORS = {
 }
 
 
-class AdminFrame(kx.XAnchor):
+class AdminFrame(kx.XFrame):
     """Widget for admin controls."""
 
     _conpath = "client.user.admin"
@@ -97,7 +97,7 @@ class AdminFrame(kx.XAnchor):
         )
         main_frame = kx.XBox(orientation="vertical")
         main_frame.add_widgets(title, kx.pwrap(bottom_frame))
-        self.add_widget(kx.fpwrap(main_frame))
+        self.add_widget(kx.pwrap(main_frame))
 
     def _refresh_requests(self):
         self._client.send(pgnet.Packet(pgnet.util.Request.HELP), self._on_help_response)
@@ -114,13 +114,14 @@ class AdminFrame(kx.XAnchor):
                     panel_widgets,
                     reset_text="",
                     invoke_text=request,
+                    fill_button=True,
                 )
                 panel.on_invoke = functools.partial(self._on_request_invoke, request)
                 panel = panel
             with self.app.subtheme_context("accent"):
                 text = request.removeprefix("__pgnet__.")
                 text = text.replace("_", " ").capitalize()
-                lbl = kx.XLabel(text=text, bold=True, underline=True, font_size="18dp")
+                lbl = kx.XLabel(text=text, bold=True, font_size="18dp")
                 lbl = kx.pwrap(kx.fwrap(lbl))
                 lbl.set_size(y="40dp")
             main_stack.add_widgets(lbl, panel)
@@ -151,22 +152,23 @@ class AdminFrame(kx.XAnchor):
         self.packet_input.set_focus("message")
 
     def _response_callback(self, response: pgnet.Response):
+        sb = self.subtheme
         status = _STATUSES[response.status]
         status_color = _STATUS_COLORS[status]
+        statusstr = status_color.markup(status.name)
         timestr = arrow.get(response.created_on).to("local").format("HH:mm:ss MMM DD")
-        statusstr = f"{status.name} ({status.value})"
         debug_strs = [
-            f"Status: {status_color.markup(statusstr)}",
-            f"[u]Created: {timestr}[/u]",
+            f"{sb.fg2.markup('Status:')} {status.value} ({statusstr})",
+            f"{sb.fg2.markup('Created:')} {timestr}",
             response.debug_repr,
         ]
         self.debug_label.text = "\n\n".join(debug_strs)
         response_strs = [
-            f"Response:\n\n{response.message!r}",
+            f"{sb.fg2.markup('Response:')} {response.message}",
         ]
         for k, v in response.payload.items():
             vstr = v if isinstance(v, str) else pprint.pformat(v, width=10_000)
-            response_strs.append(f"\n[u]{k}[/u]\n{vstr}")
+            response_strs.append(f"\n[u]{sb.fg2.markup(k)}[/u]\n{vstr}")
         self.response_label.text = "\n".join(response_strs)
 
     def set_focus(self, *args):

@@ -212,7 +212,7 @@ class Game(pgnet.Game):
         return f"{turn}, playing as: {self._username_to_mark(username)}"
 
 
-class GameWidget(kx.XAnchor):
+class GameWidget(kx.XFrame):
     """Tic-tac-toe GUI widget."""
 
     def __init__(self, client: pgnet.Client, **kwargs):
@@ -224,6 +224,11 @@ class GameWidget(kx.XAnchor):
         client.on_heartbeat = self.on_heartbeat
         client.heartbeat_payload = self.heartbeat_payload
 
+    def on_subtheme(self, *args, **kwargs):
+        """Override base method."""
+        super().on_subtheme(*args, **kwargs)
+        self._refresh_widgets()
+
     def on_heartbeat(self, heartbeat_response: pgnet.Response):
         """Update game state."""
         server_hash = heartbeat_response.payload.get("state_hash")
@@ -233,7 +238,7 @@ class GameWidget(kx.XAnchor):
         new_hash = self.game_state.get("state_hash")
         print(f"New game state (hash: {new_hash})")
         if new_hash:
-            self._on_game_state(self.game_state)
+            self._refresh_widgets()
         else:
             print(f"Missing state hash: {self.game_state=}")
 
@@ -242,14 +247,20 @@ class GameWidget(kx.XAnchor):
         return dict(state_hash=self.game_state.get("state_hash"))
 
     def _make_widgets(self):
+        # Info panel
         self.info_panel = kx.XLabel(halign="left", valign="top", padding=(10, 5))
         self.single_player_btn = kx.XButton(
             text="Start single player",
             on_release=self._single_player,
         )
         self.single_player_btn.set_size(hx=0.5)
-        spbtn = kx.wrap(self.single_player_btn)
-        spbtn.set_size(y=50)
+        spbtn = kx.pwrap(self.single_player_btn)
+        spbtn.set_size(y="75sp")
+        panel_box = kx.XBox(orientation="vertical")
+        panel_box.add_widgets(self.info_panel, spbtn)
+        panel_frame = kx.pwrap(panel_box)
+        panel_frame.set_size(x="350dp")
+        # Board
         board_frame = kx.XGrid(cols=3)
         self.board = []
         for i in range(9):
@@ -263,34 +274,32 @@ class GameWidget(kx.XAnchor):
             self.board.append(square)
             board_frame.add_widget(kx.pwrap(square))
         # Assemble
-        self.panel_frame = kx.XBox(orientation="vertical")
-        self.panel_frame.add_widgets(self.info_panel, spbtn)
-        self.panel_frame.set_size(x="350dp")
         main_frame = kx.XBox()
-        main_frame.add_widgets(self.panel_frame, board_frame)
+        main_frame.add_widgets(panel_frame, board_frame)
         self.clear_widgets()
         self.add_widget(main_frame)
 
-    def _on_game_state(self, state):
+    def _refresh_widgets(self, *args):
+        state = self.game_state
+        fg2 = self.subtheme.fg2.markup
+        bullet = fg2("•")
         players = state.get("players", [])[:2]
         spectators = state.get("players", [])[2:]
-        info = state.get('info', '')
+        info = state.get("info", "Awaiting data from server...")
         if state.get("your_turn"):
-            self.panel_frame.subtheme_name = "primary"
-            info = f"[b]{state.get('info', '')}[/b]"
-        else:
-            self.panel_frame.subtheme_name = "secondary"
+            info = f"[b]{info}[/b]"
         self.info_panel.text = "\n".join([
             "\n",
-            info,
+            f"[i]{info}[/i]",
             "\n",
-            f"[u]Game:[/u] [i]{self.client.game}[/i]",
+            fg2("[u][b]Game[/b][/u]"),
+            self.client.game,
             "\n",
-            "[u]Players:[/u]",
+            fg2("[u][b]Players[/b][/u]"),
             *(f" ( [b]{'OX'[i]}[/b] ) {p}" for i, p in enumerate(players)),
             "\n",
-            "[u]Spectators:[/u]",
-            *(f" • {s}" for s in spectators),
+            fg2("[u][b]Spectators[/b][/u]"),
+            *(f" {bullet} {s}" for s in spectators),
         ])
         winning_line = state.get("winning_line") or tuple()
         marks = tuple(str(s or "") for s in state.get("board", [None] * 9))

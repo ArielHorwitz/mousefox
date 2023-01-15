@@ -7,31 +7,37 @@ import kvex as kx
 import pgnet
 
 
-INFO_TEXT = (
-    "[size=20dp][b][u]Hosting a server[/u][/b][/size]"
-    "\n\n"
-    "[b][i]Please consider your network security before running a"
-    " server[/i][/b]."
-    "\n\n"
-    "For best performance, run the server in a separate instance."
-    " You may be required to configure port forwarding on your network device before"
-    " remote clients can discover a server."
-    "\n\n\n"
-    "The running server is available at address"
-    " [font=RobotoMono-Regular][color=#ffffbb]localhost[/color][/font] and can be"
-    " connected to normally. To manage a server, connect as admin and use the admin"
-    " panel."
-    "\n\n\n"
-)
+def _info_text(subtheme) -> str:
+    warn = "Please consider your network security before running a server."
+    lh = subtheme.fg2.markup("localhost")
+    return (
+        "[size=20dp][b][u]Hosting a server[/u][/b][/size]"
+        "\n\n"
+        f"[b][i]{subtheme.fg2.markup(warn)}[/i][/b]"
+        "\n\n"
+        "For best performance, run the server in a separate instance."
+        " You may be required to configure port forwarding on your network device"
+        " before remote clients can discover the server."
+        "\n\n\n"
+        "The running server is available at address"
+        f" [font=RobotoMono-Regular]{lh}[/font] and can"
+        " be connected to normally. To manage a server, connect as admin and use"
+        " the admin panel."
+    )
 
 
-class ServerFrame(kx.XAnchor):
+class ServerFrame(kx.XThemed, kx.XAnchor):
     """Widget for launching server."""
 
     _conpath = "server"
 
     def __init__(self, app_config):
         """Initialize the class with an `AppConfig`."""
+        self.info_label = kx.XLabel(
+            halign="left",
+            valign="top",
+            padding=(10, 10),
+        )
         super().__init__()
         self._running_server: Optional[pgnet.Server] = None
         self._game_class = app_config.game_class
@@ -40,15 +46,13 @@ class ServerFrame(kx.XAnchor):
         self.app.controller.bind(f"{self._conpath}.focus", self.set_focus)
         self.app.controller.bind(f"{self._conpath}.shutdown", self._shutdown_server)
 
+    def on_subtheme(self, subtheme):
+        """Highlight text."""
+        self.info_label.text = _info_text(subtheme)
+
     def _make_widgets(self, app_config):
         # Left frame
-        info_label = kx.XLabel(
-            text=INFO_TEXT,
-            halign="left",
-            valign="top",
-            padding=(10, 10),
-        )
-        info_label.set_size(hy=5)
+        self.info_label.set_size(hy=5)
         return_btn = kx.XButton(
             text="Return to client",
             on_release=self._return_to_client,
@@ -56,7 +60,7 @@ class ServerFrame(kx.XAnchor):
         return_btn.set_size(x="250dp", y="40dp")
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(
-            info_label,
+            self.info_label,
             kx.wrap(return_btn),
         )
         # Right frame
@@ -152,7 +156,7 @@ class ServerFrame(kx.XAnchor):
             status = pgnet.Status.UNEXPECTED
         except Exception as e:
             logger.warning(e)
-            shutdown_message = "Server failed (see logs)"
+            shutdown_message = "Server failed. Perhaps one is already running?"
             status = pgnet.Status.BAD
         self.shutdown_btn.disabled = True
         self.pubkey_label.text = "No server running."
