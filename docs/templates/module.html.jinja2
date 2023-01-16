@@ -7,8 +7,8 @@
     background:#222; position:fixed; top:0; z-index:100; height:2.5em;">
 
     {# Title #}
-    {% set root_link = "../" * module.modulename.split(".").__len__() %}
-    <a href="{{ root_link }}" style="color:#936c00; padding-left:1em;">
+    {% set root_link = "../" * (module.modulename.split(".").__len__() - 1) %}
+    <a href="{{ root_link }}index.html" style="color:#936c00; padding-left:1em;">
         <img style="vertical-align:middle;"
             src="https://ariel.ninja/mousefox/icon.png"
             alt="[MouseFox logo]"/>
