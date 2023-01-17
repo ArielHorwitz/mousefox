@@ -88,7 +88,7 @@ class ClientFrame(kx.XAnchor):
         assert client is self._client
         if not connected:
             return
-        client.on_connection = None
+        client.on_connection = self._refresh_menu_buttons
         self._sm.current = "user"
 
     def _on_client_status(self, client: pgnet.Client, status_message: str):
@@ -100,3 +100,12 @@ class ClientFrame(kx.XAnchor):
         if not self._client:
             return
         self._client.disconnect()
+
+    def _refresh_menu_buttons(self, *args):
+        connected = self._client.connected
+        menu_get = self.app.menu.get_button
+        menu_get("app", "disconnect").disabled = connected
+        if not connected:
+            menu_get("app", "lobby").disabled = True
+            menu_get("app", "game").disabled = True
+            menu_get("app", "admin_panel").disabled = True

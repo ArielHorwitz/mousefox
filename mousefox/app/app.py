@@ -197,7 +197,6 @@ class App(kx.XApp):
         self.menu.set_size(x="500dp")
         self.menu.add_category("app")
         menu_add = self.menu.add_button
-        menu_get = self.menu.get_button
         menu_add("app", "disconnect")
         menu_add("app", "leave_game")
         menu_add("app", "lobby")
@@ -206,8 +205,7 @@ class App(kx.XApp):
         menu_add("app", "host_server", self._show_server)
         menu_add("app", "restart", self.restart)
         menu_add("app", "quit", self.stop)
-        menu_get("app", "disconnect").disabled = True
-        menu_get("app", "leave_game").disabled = True
+        menu_get = self.menu.get_button
         menu_get("app", "lobby").disabled = True
         menu_get("app", "game").disabled = True
         menu_get("app", "admin_panel").disabled = True
