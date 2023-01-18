@@ -9,11 +9,6 @@ import pprint
 
 
 _STATUSES = {s.value: s for s in pgnet.Status}
-_STATUS_COLORS = {
-    pgnet.Status.OK.value: kx.XColor.from_hex("00ff00"),
-    pgnet.Status.UNEXPECTED.value: kx.XColor.from_hex("bbbb00"),
-    pgnet.Status.BAD.value: kx.XColor.from_hex("ff0000"),
-}
 
 
 class AdminFrame(kx.XFrame):
@@ -154,21 +149,21 @@ class AdminFrame(kx.XFrame):
     def _response_callback(self, response: pgnet.Response):
         sb = self.subtheme
         status = _STATUSES[response.status]
-        status_color = _STATUS_COLORS[status]
+        status_color = sb.fg_warn if status else sb.fg
         statusstr = status_color.markup(status.name)
         timestr = arrow.get(response.created_on).to("local").format("HH:mm:ss MMM DD")
         debug_strs = [
-            f"{sb.fg2.markup('Status:')} {status.value} ({statusstr})",
-            f"{sb.fg2.markup('Created:')} {timestr}",
+            f"{sb.fg_accent.markup('Status:')} {status.value} ({statusstr})",
+            f"{sb.fg_accent.markup('Created:')} {timestr}",
             response.debug_repr,
         ]
         self.debug_label.text = "\n\n".join(debug_strs)
         response_strs = [
-            f"{sb.fg2.markup('Response:')} {response.message}",
+            f"{sb.fg_accent.markup('Response:')} {response.message}",
         ]
         for k, v in response.payload.items():
             vstr = v if isinstance(v, str) else pprint.pformat(v, width=10_000)
-            response_strs.append(f"\n[u]{sb.fg2.markup(k)}[/u]\n{vstr}")
+            response_strs.append(f"\n[u]{sb.fg_accent.markup(k)}[/u]\n{vstr}")
         self.response_label.text = "\n".join(response_strs)
 
     def set_focus(self, *args):

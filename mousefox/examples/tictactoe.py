@@ -281,8 +281,8 @@ class GameWidget(kx.XFrame):
 
     def _refresh_widgets(self, *args):
         state = self.game_state
-        fg2 = self.subtheme.fg2.markup
-        bullet = fg2("•")
+        fg_accent = self.subtheme.fg_accent.markup
+        bullet = fg_accent("•")
         players = state.get("players", [])[:2]
         spectators = state.get("players", [])[2:]
         info = state.get("info", "Awaiting data from server...")
@@ -292,13 +292,13 @@ class GameWidget(kx.XFrame):
             "\n",
             f"[i]{info}[/i]",
             "\n",
-            fg2("[u][b]Game[/b][/u]"),
+            fg_accent("[u][b]Game[/b][/u]"),
             self.client.game,
             "\n",
-            fg2("[u][b]Players[/b][/u]"),
+            fg_accent("[u][b]Players[/b][/u]"),
             *(f" ( [b]{'OX'[i]}[/b] ) {p}" for i, p in enumerate(players)),
             "\n",
-            fg2("[u][b]Spectators[/b][/u]"),
+            fg_accent("[u][b]Spectators[/b][/u]"),
             *(f" {bullet} {s}" for s in spectators),
         ])
         winning_line = state.get("winning_line") or tuple()

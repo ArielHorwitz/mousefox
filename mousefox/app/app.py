@@ -123,8 +123,8 @@ class App(kx.XApp):
             text: Text to show.
             status: pgnet.Status, used for colors.
         """
-        color = _STATUS_COLORS[status]
-        self._status.color = color.rgba
+        color_name = "fg_warn" if status else "fg"
+        self._status.color = self.theme.primary[color_name].rgba
         self._status.text = text
 
     def feedback_response(
@@ -160,9 +160,6 @@ class App(kx.XApp):
             valign="middle",
             italic=True,
             padding=(10, 10),
-            outline_width=2,
-            outline_color=(0, 0, 0),
-            font_size="18sp",
         )
         self._client_frame = ClientFrame(app_config)
         self._server_frame = ServerFrame(app_config)
@@ -269,10 +266,3 @@ async def _close_remaining_tasks(debug: bool = True):
                     + "\n".join(f"  -- {t}" for t in remaining_tasks)
                 )
             continue
-
-
-_STATUS_COLORS = {
-    pgnet.Status.OK.value: kx.XColor.from_hex("00bb00"),
-    pgnet.Status.UNEXPECTED.value: kx.XColor.from_hex("bbbb00"),
-    pgnet.Status.BAD.value: kx.XColor.from_hex("ff0000"),
-}

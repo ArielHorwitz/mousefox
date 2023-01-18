@@ -9,11 +9,11 @@ import pgnet
 
 def _info_text(subtheme) -> str:
     warn = "Please consider your network security before running a server."
-    lh = subtheme.fg2.markup("localhost")
+    lh = subtheme.fg_accent.markup("localhost")
     return (
         "[size=20dp][b][u]Hosting a server[/u][/b][/size]"
         "\n\n"
-        f"[b][i]{subtheme.fg2.markup(warn)}[/i][/b]"
+        f"[b][i]{subtheme.fg_warn.markup(warn)}[/i][/b]"
         "\n\n"
         "For best performance, run the server in a separate instance."
         " You may be required to configure port forwarding on your network device"

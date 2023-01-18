@@ -136,16 +136,16 @@ class GameWidget(kx.XFrame):
     def _refresh_widgets(self, *args):
         room_name = self._game_data["room_name"]
         users = set(self._game_data["users"])
-        info_fg2 = self.app.theme.secondary.fg2.markup
-        bullet = self.app.theme.secondary.accent2.markup("•")
+        fg_accent = self.app.theme.secondary.fg_accent.markup
+        bullet = self.app.theme.secondary.accent.markup("•")
         self.info_panel.text = "\n".join([
-            f"[u][b]Chat Room[/b][/u]\n[i]{info_fg2(room_name)}[/i]",
+            f"[u][b]Chat Room[/b][/u]\n[i]{fg_accent(room_name)}[/i]",
             "\n",
             "[u][b]Users[/b][/u]",
-            *(f" {bullet} {info_fg2(user)}" for user in users),
+            *(f" {bullet} {fg_accent(user)}" for user in users),
         ])
         text_lines = []
-        chevron = self.subtheme.accent1.markup(">>>")
+        chevron = self.subtheme.fg_muted.markup(">")
         for raw_message in self._game_data["messages"]:
             message = Message.deserialize(raw_message)
             time = arrow.get(message.time).to("local").format("HH:mm:ss")
