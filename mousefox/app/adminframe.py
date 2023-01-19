@@ -18,7 +18,7 @@ class AdminFrame(kx.XFrame):
 
     def __init__(self, client: pgnet.Client):
         """Initialize the class with a client."""
-        super().__init__()
+        super().__init__(frame=False, bg=False)
         self._client = client
         self._make_widgets()
         self.app.controller.set_active_callback(self._conpath, self.set_focus)
@@ -27,7 +27,12 @@ class AdminFrame(kx.XFrame):
 
     def _make_widgets(self):
         with self.app.subtheme_context("accent"):
-            title = kx.fwrap(kx.XLabel(text="Admin Panel", bold=True, font_size="36sp"))
+            title = kx.frame(
+                kx.XLabel(text="Admin Panel", bold=True, font_size="36sp"),
+                bg=True,
+                frame=False,
+                pad=False,
+            )
             title.set_size(y="40sp")
         # Requests frame
         requests_placeholder = kx.XPlaceholder(
@@ -41,7 +46,7 @@ class AdminFrame(kx.XFrame):
             underline=True,
             font_size="18dp",
         )
-        custom_input_title = kx.wrap(custom_input_label)
+        custom_input_title = kx.pad(custom_input_label)
         custom_input_title.set_size(y="40dp")
         packet_input_widgets = dict(
             message=kx.XInputPanelWidget(
@@ -62,8 +67,10 @@ class AdminFrame(kx.XFrame):
         )
         self.packet_input.bind(on_invoke=self._on_packet_input)
         self.packet_input.set_size(y="100dp")
-        self.custom_packet_frame = kx.XDynamic()
-        self.custom_packet_frame.add_widgets(custom_input_title, self.packet_input)
+        custom_packet_frame = kx.XDynamicBox(orientation="vertical")
+        custom_packet_frame.add_widgets(custom_input_title, self.packet_input)
+        self.custom_packet_frame = kx.XDynamic(margin=True)
+        self.custom_packet_frame.add_widget(custom_packet_frame)
         # Response labels
         self.response_label = kx.XLabel(
             font_name="RobotoMono-Regular",
@@ -73,17 +80,18 @@ class AdminFrame(kx.XFrame):
             fixed_width=True,
         )
         response_label_frame = kx.XScroll(view=self.response_label)
-        self.debug_label = kx.XLabel(
-            font_name="RobotoMono-Regular",
-            padding=(10, 10),
-            halign="left",
-            valign="top",
-            fixed_width=True,
-        )
-        debug_label_frame = kx.fwrap(kx.XScroll(view=self.debug_label))
-        debug_label_frame.set_size(x="300dp")
+        with self.app.subtheme_context("secondary"):
+            self.debug_label = kx.XLabel(
+                font_name="RobotoMono-Regular",
+                padding=(10, 10),
+                halign="left",
+                valign="top",
+                fixed_width=True,
+            )
+            debug_label_frame = kx.frame(kx.XScroll(view=self.debug_label), bg=True)
         # Assemble
-        self.requests_frame.set_size(x="300dp")
+        debug_label_frame.set_size(hx=0.3)
+        self.requests_frame.set_size(x="350sp")
         bottom_frame = kx.XBox()
         bottom_frame.add_widgets(
             debug_label_frame,
@@ -91,14 +99,14 @@ class AdminFrame(kx.XFrame):
             self.requests_frame,
         )
         main_frame = kx.XBox(orientation="vertical")
-        main_frame.add_widgets(title, kx.pwrap(bottom_frame))
-        self.add_widget(kx.pwrap(main_frame))
+        main_frame.add_widgets(title, kx.pad(bottom_frame))
+        self.add_widget(main_frame)
 
     def _refresh_requests(self):
         self._client.send(pgnet.Packet(pgnet.util.Request.HELP), self._on_help_response)
 
     def _on_help_response(self, response: pgnet.Response):
-        main_stack = kx.XDynamic()
+        main_stack = kx.XDynamicBox(orientation="vertical")
         for request, params in response.payload.items():
             panel_widgets = {
                 name: kx.XInputPanelWidget(label=f"{name}:", widget=ptype)
@@ -117,14 +125,23 @@ class AdminFrame(kx.XFrame):
                 text = request.removeprefix("__pgnet__.")
                 text = text.replace("_", " ").capitalize()
                 lbl = kx.XLabel(text=text, bold=True, font_size="18dp")
-                lbl = kx.pwrap(kx.fwrap(lbl))
+                lbl = kx.frame(lbl, bg=True, frame=False, pad=False)
                 lbl.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
-            main_stack.add_widgets(lbl, panel)
+            sub_stack = kx.XDynamicBox(orientation="vertical")
+            sub_stack.add_widgets(lbl, panel)
+            subframe = kx.frame(
+                sub_stack,
+                dynamic=True,
+                frame=False,
+                margins="20dp",
+            )
+            main_stack.add_widgets(subframe)
         if self.custom_packet_frame.parent:
             self.custom_packet_frame.parent.remove_widget(self.custom_packet_frame)
         main_stack.add_widget(self.custom_packet_frame)
         scroll = kx.XScroll(view=main_stack)
-        self.requests_frame.content = kx.fpwrap(scroll, subtheme_name="secondary")
+        with self.app.subtheme_context("secondary"):
+            self.requests_frame.content = kx.frame(scroll, bg=True)
 
     def _request_debug(self, *args):
         self._client.send(
@@ -147,7 +164,7 @@ class AdminFrame(kx.XFrame):
         self.packet_input.set_focus("message")
 
     def _response_callback(self, response: pgnet.Response):
-        sb = self.subtheme
+        sb = self.app.theme.secondary
         status = _STATUSES[response.status]
         status_color = sb.fg_warn if status else sb.fg
         statusstr = status_color.markup(status.name)
@@ -158,6 +175,7 @@ class AdminFrame(kx.XFrame):
             response.debug_repr,
         ]
         self.debug_label.text = "\n\n".join(debug_strs)
+        sb = self.app.theme.primary
         response_strs = [
             f"{sb.fg_accent.markup('Response:')} {response.message}",
         ]

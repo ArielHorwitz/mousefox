@@ -101,9 +101,20 @@ AWAITING_DATA_TEXT = "Awaiting data from server..."
 class GameWidget(kx.XFrame):
     """Chat GUI widget."""
 
-    def __init__(self, client: pgnet.Client, **kwargs):
+    def __init__(self, client: pgnet.Client):
         """Override base method."""
-        super().__init__(**kwargs)
+        self.info_panel = kx.XLabel(
+            text="Getting chat room info...",
+            halign="left",
+            valign="top",
+            subtheme_name="secondary",
+        )
+        self.messages_label = kx.XLabel(
+            text="Getting chat messages...",
+            halign="left",
+            valign="bottom",
+            fixed_width=True,
+        )
         self.client = client
         self._game_data = dict(
             update_hash=None,
@@ -111,6 +122,7 @@ class GameWidget(kx.XFrame):
             users=[],
             messages=[Message("system", AWAITING_DATA_TEXT).serialize()],
         )
+        super().__init__(frame=False, bg=False)
         self._make_widgets()
         client.on_heartbeat = self.on_heartbeat
         client.heartbeat_payload = self.heartbeat_payload
@@ -156,32 +168,34 @@ class GameWidget(kx.XFrame):
         self.messages_label.text = "\n".join(text_lines)
 
     def _make_widgets(self):
-        with self.app.subtheme_context("secondary"):
-            self.info_panel = kx.XLabel(
-                text="Getting chat room info...",
-                halign="left",
-                valign="top",
-            )
-            info_frame = kx.pwrap(kx.fwrap(kx.pwrap(self.info_panel)))
-            info_frame.set_size(hx=0.3)
-        self.messages_label = kx.XLabel(
-            text="Getting chat messages...",
-            halign="left",
-            valign="bottom",
-            fixed_width=True,
+        info_frame = kx.frame(
+            kx.pad(self.info_panel),
+            subtheme_name="secondary",
+            bg=True,
+            ssx="200sp",
         )
         with self.app.subtheme_context("accent"):
-            self.message_input = kx.XInput(on_text_validate=self._message_validate)
+            self.message_input = kx.XInput(
+                on_text_validate=self._message_validate,
+                ssy=kx.DEFAULT_BUTTON_HEIGHT,
+            )
             self.message_input.focus = True
-            input_frame = kx.pwrap(kx.fwrap(self.message_input))
-            input_frame.set_size(y="55dp")
-        messages_frame = kx.pwrap(kx.XScroll(self.messages_label))
+            input_frame = kx.frame(
+                self.message_input,
+                frame=False,
+                pad=True,
+                bg=True,
+                dynamic=True
+            )
         chat_frame = kx.XBox(orientation="vertical")
-        chat_frame.add_widgets(messages_frame, input_frame)
+        chat_frame.add_widgets(
+            kx.pad(kx.XScroll(self.messages_label)),
+            input_frame,
+        )
         main_frame = kx.XBox()
-        main_frame.add_widgets(info_frame, kx.pwrap(chat_frame))
+        main_frame.add_widgets(info_frame, chat_frame)
         self.clear_widgets()
-        self.add_widget(main_frame)
+        self.add_widget(kx.pad(main_frame))
 
     def _message_validate(self, w):
         self.client.send(pgnet.Packet("message", dict(text=w.text)))
@@ -189,7 +203,7 @@ class GameWidget(kx.XFrame):
 
 
 INFO_TEXT = (
-    "[b][u]Welcome to MouseFox[/u][/b]"
+    "[size=20dp][b][u]Welcome to MouseFox[/b][/u][/size]"
     "\n\n"
     "This chat server is a builtin example to demo MouseFox."
 )

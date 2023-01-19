@@ -61,7 +61,7 @@ class ServerFrame(kx.XThemed, kx.XAnchor):
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(
             self.info_label,
-            kx.wrap(return_btn),
+            kx.pad(return_btn),
         )
         # Right frame
         config_panel_widgets = {
@@ -88,7 +88,7 @@ class ServerFrame(kx.XThemed, kx.XAnchor):
                 invoke_text="Launch server",
             )
             self._config_panel.bind(on_invoke=self._on_config_invoke)
-            config_frame = kx.pwrap(self._config_panel)
+            config_frame = kx.pad(self._config_panel)
             with self.app.subtheme_context("accent"):
                 self.pubkey_label = kx.XInput(
                     text="No server running.",
@@ -110,17 +110,17 @@ class ServerFrame(kx.XThemed, kx.XAnchor):
                 running_frame = kx.XBox(orientation="vertical")
                 running_frame.add_widgets(
                     pubkey_label_hint,
-                    kx.pwrap(self.pubkey_label),
-                    kx.wrap(self.shutdown_btn),
+                    kx.pad(self.pubkey_label),
+                    kx.pad(self.shutdown_btn),
                 )
-                running_frame = kx.fpwrap(running_frame)
+                running_frame = kx.pad(kx.frame(running_frame, bg=True, frame=False))
                 running_frame.set_size(y="200sp")
             right_frame = kx.XBox(orientation="vertical")
-            right_frame.add_widgets(config_frame, running_frame)
-            right_frame = kx.fpwrap(right_frame)
+            right_frame.add_widgets(config_frame, kx.XAnchor(), running_frame)
+            right_frame = kx.pad(kx.frame(right_frame, bg=True, frame=False))
         main_frame = kx.XBox()
         main_frame.add_widgets(left_frame, right_frame)
-        self.add_widget(kx.pwrap(kx.fpwrap(main_frame)))
+        self.add_widget(kx.frame(main_frame))
 
     def _on_config_invoke(self, w, values):
         self.set_focus()

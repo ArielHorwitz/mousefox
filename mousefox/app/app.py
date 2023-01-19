@@ -137,7 +137,7 @@ class App(kx.XApp):
             log_active=True,
         )
         self._make_widgets(app_config)
-        self.hook(self._update, 20)
+        kx.schedule_interval(self._update, 1/20)
         self.set_feedback("Welcome")
 
     async def async_run(self):
@@ -208,7 +208,7 @@ class App(kx.XApp):
         self.top_bar.set_size(y="32sp")
         main_frame = kx.XBox(orientation="vertical")
         main_frame.add_widgets(self.top_bar, self._sm)
-        self.root.clear_widgets()
+        self.root = kx.XRoot()
         self.root.add_widget(main_frame)
         self._refresh_background()
         self._show_client()

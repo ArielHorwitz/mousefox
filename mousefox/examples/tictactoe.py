@@ -254,11 +254,11 @@ class GameWidget(kx.XFrame):
             on_release=self._single_player,
         )
         self.single_player_btn.set_size(hx=0.5)
-        spbtn = kx.pwrap(self.single_player_btn)
+        spbtn = kx.wrap(self.single_player_btn, pad=True)
         spbtn.set_size(y="75sp")
         panel_box = kx.XBox(orientation="vertical")
         panel_box.add_widgets(self.info_panel, spbtn)
-        panel_frame = kx.pwrap(panel_box)
+        panel_frame = kx.wrap(panel_box, pad=True)
         panel_frame.set_size(x="350dp")
         # Board
         board_frame = kx.XGrid(cols=3)
@@ -272,7 +272,7 @@ class GameWidget(kx.XFrame):
             )
             square.set_size(hx=0.85, hy=0.85)
             self.board.append(square)
-            board_frame.add_widget(kx.pwrap(square))
+            board_frame.add_widget(kx.wrap(square, pad=True))
         # Assemble
         main_frame = kx.XBox()
         main_frame.add_widgets(panel_frame, board_frame)

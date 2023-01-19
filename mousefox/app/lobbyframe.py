@@ -47,12 +47,17 @@ class LobbyFrame(kx.XAnchor):
     def _make_widgets(self):
         # Game list
         with self.app.subtheme_context("secondary"):
-            title = kx.fwrap(kx.XLabel(text="[b]Server lobby[/b]", font_size="18sp"))
+            title = kx.frame(
+                kx.XLabel(text="[b]Server lobby[/b]", font_size="18sp"),
+                frame=False,
+                bg=True,
+                pad=False,
+            )
             title.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
         self.games_list = kx.XList(
             items=[""],
             selection_color=(1, 1, 1),
-            item_height=kx.sp2pixels(kx.DEFAULT_BUTTON_HEIGHT),
+            item_height=kx.to_pixels(kx.DEFAULT_BUTTON_HEIGHT),
         )
         self.games_list.bind(
             on_invoke=self._on_game_invoke,
@@ -60,7 +65,7 @@ class LobbyFrame(kx.XAnchor):
         )
         list_box = kx.XBox(orientation="vertical")
         list_box.add_widgets(title, self.games_list)
-        list_frame = kx.pwrap(kx.fpwrap(list_box))
+        list_frame = kx.pad(list_box)
 
         # Game info
         join_iwidgets = dict(password=kx.XInputPanelWidget("Password", "password"))
@@ -74,7 +79,7 @@ class LobbyFrame(kx.XAnchor):
                 invoke_text="Join",
             )
             self.join_panel.bind(on_invoke=self._join_game)
-            self.join_panel.set_size(y=kx.sp2pixels(kx.DEFAULT_BUTTON_HEIGHT) * 2)
+            self.join_panel.set_size(y=kx.to_pixels(kx.DEFAULT_BUTTON_HEIGHT) * 2)
             info_panel = kx.XBox(orientation="vertical")
             info_panel.add_widgets(
                 info_title,
@@ -82,8 +87,8 @@ class LobbyFrame(kx.XAnchor):
                 self.join_panel,
             )
             right_box = kx.XBox(orientation="vertical")
-            right_box.add_widget(kx.pwrap(info_panel))
-            right_frame = kx.fwrap(right_box)
+            right_box.add_widgets(kx.pad(info_panel))
+            right_frame = kx.frame(right_box, bg=True)
 
         # Create game
         pwidgets = dict(
@@ -99,17 +104,17 @@ class LobbyFrame(kx.XAnchor):
                 reset_text="",
             )
             self.create_panel.bind(on_invoke=self._create_game)
-            self.create_panel.set_size(y="200dp")
-            create_box = kx.XBox(orientation="vertical")
+            # self.create_panel.set_size(y="200dp")
+            create_box = kx.XDynamicBox(orientation="vertical")
             create_box.add_widgets(create_title, self.create_panel)
-            create_frame = kx.pwrap(kx.fpwrap(create_box))
-            create_frame.set_size(y=self.create_panel.height + create_title.height)
+            create_frame = kx.frame(create_box, dynamic=True, bg=True, frame=False, pad=True)
+            create_frame = kx.frame(create_frame, dynamic=True, frame=False, pad=True)
             right_box.add_widget(create_frame)
 
         # Assemble
         main_frame = kx.XBox()
-        main_frame.add_widgets(list_frame, kx.pwrap(right_frame))
-        self.add_widget(main_frame)
+        main_frame.add_widgets(list_frame, right_frame)
+        self.add_widget(kx.pad(main_frame))
 
     def _create_game(self, *args):
         values = self.create_panel.get_values()

@@ -88,7 +88,7 @@ class ConnectPanel(kx.XAnchor):
             content=online_info_label,
             showing=config.online,
         )
-        left_labels = kx.XDynamic()
+        left_labels = kx.XDynamicBox(orientation="vertical")
         left_labels.add_widgets(info_label, self._online_info_label)
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(left_labels, kx.XAnchor())
@@ -139,15 +139,21 @@ class ConnectPanel(kx.XAnchor):
         )
         with self.app.subtheme_context("secondary"):
             self.connection_panel = kx.XInputPanel(pwidgets, invoke_text="Connect")
-            connection_panel = kx.fwrap(self.connection_panel)
+            connection_panel = kx.pad(self.connection_panel)
+            connection_frame = kx.XBox(orientation="vertical")
+            connection_frame.add_widgets(connection_panel, kx.XAnchor())
+            connection_frame = kx.pad(kx.frame(connection_frame, bg=True, frame=False))
         self.connection_panel.bind(
             on_invoke=self._connect,
             on_values=self._on_connection_values,
         )
         # Assemble
         main_frame = kx.XBox()
-        main_frame.add_widgets(kx.pwrap(left_frame), kx.pwrap(connection_panel))
-        self.add_widget(kx.pwrap(kx.fwrap(main_frame)))
+        main_frame.add_widgets(
+            left_frame,
+            connection_frame,
+        )
+        self.add_widget(kx.frame(main_frame))
 
     def _connect(self, *args):
         self.connection_panel.set_focus("username")
