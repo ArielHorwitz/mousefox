@@ -88,7 +88,7 @@ class ConnectPanel(kx.XAnchor):
             content=online_info_label,
             showing=config.online,
         )
-        left_labels = kx.XDBox()
+        left_labels = kx.XDynamic()
         left_labels.add_widgets(info_label, self._online_info_label)
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(left_labels, kx.XAnchor())

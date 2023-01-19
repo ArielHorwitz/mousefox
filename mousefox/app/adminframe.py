@@ -62,7 +62,7 @@ class AdminFrame(kx.XFrame):
         )
         self.packet_input.bind(on_invoke=self._on_packet_input)
         self.packet_input.set_size(y="100dp")
-        self.custom_packet_frame = kx.XDBox()
+        self.custom_packet_frame = kx.XDynamic()
         self.custom_packet_frame.add_widgets(custom_input_title, self.packet_input)
         # Response labels
         self.response_label = kx.XLabel(
@@ -98,7 +98,7 @@ class AdminFrame(kx.XFrame):
         self._client.send(pgnet.Packet(pgnet.util.Request.HELP), self._on_help_response)
 
     def _on_help_response(self, response: pgnet.Response):
-        main_stack = kx.XDBox()
+        main_stack = kx.XDynamic()
         for request, params in response.payload.items():
             panel_widgets = {
                 name: kx.XInputPanelWidget(label=f"{name}:", widget=ptype)
