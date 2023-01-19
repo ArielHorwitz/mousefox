@@ -9,7 +9,6 @@ import pgnet
 from .. import util
 
 
-LINE_HEIGHT = 40
 CONFIG_FILE = util.get_appdata_dir() / "connection_config.json"
 
 

@@ -118,7 +118,7 @@ class AdminFrame(kx.XFrame):
                 text = text.replace("_", " ").capitalize()
                 lbl = kx.XLabel(text=text, bold=True, font_size="18dp")
                 lbl = kx.pwrap(kx.fwrap(lbl))
-                lbl.set_size(y="40dp")
+                lbl.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
             main_stack.add_widgets(lbl, panel)
         if self.custom_packet_frame.parent:
             self.custom_packet_frame.parent.remove_widget(self.custom_packet_frame)

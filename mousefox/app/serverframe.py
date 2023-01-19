@@ -57,7 +57,7 @@ class ServerFrame(kx.XThemed, kx.XAnchor):
             text="Return to client",
             on_release=self._return_to_client,
         )
-        return_btn.set_size(x="250dp", y="40dp")
+        return_btn.set_size(x="250dp")
         left_frame = kx.XBox(orientation="vertical")
         left_frame.add_widgets(
             self.info_label,
@@ -98,15 +98,15 @@ class ServerFrame(kx.XThemed, kx.XAnchor):
                     halign="center",
                     subtheme_name="secondary",
                 )
-                self.pubkey_label.set_size(y="40dp")
+                self.pubkey_label.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
                 pubkey_label_hint = kx.XLabel(text="Server pubkey:")
-                pubkey_label_hint.set_size(y="40dp")
+                pubkey_label_hint.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
                 self.shutdown_btn = kx.XButton(
                     text="Shutdown server",
                     on_release=self._shutdown_server,
                     disabled=True,
                 )
-                self.shutdown_btn.set_size(x="250dp", y="40dp")
+                self.shutdown_btn.set_size(x="250dp")
                 running_frame = kx.XBox(orientation="vertical")
                 running_frame.add_widgets(
                     pubkey_label_hint,

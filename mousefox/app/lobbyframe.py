@@ -6,7 +6,6 @@ import kvex as kx
 import pgnet
 
 
-LINE_WIDGET_HEIGHT = 40
 AUTO_REFRESH_INTERVAL = 1
 
 
@@ -49,11 +48,11 @@ class LobbyFrame(kx.XAnchor):
         # Game list
         with self.app.subtheme_context("secondary"):
             title = kx.fwrap(kx.XLabel(text="[b]Server lobby[/b]", font_size="18sp"))
-            title.set_size(y=LINE_WIDGET_HEIGHT)
+            title.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
         self.games_list = kx.XList(
             items=[""],
             selection_color=(1, 1, 1),
-            item_height=LINE_WIDGET_HEIGHT,
+            item_height=kx.sp2pixels(kx.DEFAULT_BUTTON_HEIGHT),
         )
         self.games_list.bind(
             on_invoke=self._on_game_invoke,
@@ -67,7 +66,7 @@ class LobbyFrame(kx.XAnchor):
         join_iwidgets = dict(password=kx.XInputPanelWidget("Password", "password"))
         with self.app.subtheme_context("secondary"):
             info_title = kx.XLabel(text="[b]Game Details[/b]")
-            info_title.set_size(y=LINE_WIDGET_HEIGHT)
+            info_title.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
             self.game_info_label = kx.XLabel(halign="left", valign="top")
             self.join_panel = kx.XInputPanel(
                 join_iwidgets,
@@ -75,7 +74,7 @@ class LobbyFrame(kx.XAnchor):
                 invoke_text="Join",
             )
             self.join_panel.bind(on_invoke=self._join_game)
-            self.join_panel.set_size(y=LINE_WIDGET_HEIGHT * 2)
+            self.join_panel.set_size(y=kx.sp2pixels(kx.DEFAULT_BUTTON_HEIGHT) * 2)
             info_panel = kx.XBox(orientation="vertical")
             info_panel.add_widgets(
                 info_title,
@@ -93,7 +92,7 @@ class LobbyFrame(kx.XAnchor):
         )
         with self.app.subtheme_context("accent"):
             create_title = kx.XLabel(text="[b]Create new game[/b]")
-            create_title.set_size(y=LINE_WIDGET_HEIGHT)
+            create_title.set_size(y=kx.DEFAULT_BUTTON_HEIGHT)
             self.create_panel = kx.XInputPanel(
                 pwidgets,
                 invoke_text="Create game",
