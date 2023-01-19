@@ -3,6 +3,7 @@
 from typing import Optional, Type, Callable
 from loguru import logger
 import asyncio
+import docopt
 from dataclasses import dataclass
 import pathlib
 import kvex as kx
@@ -16,6 +17,18 @@ from .serverframe import ServerFrame
 COLOR_PALETTE = "default"
 HOTKEYS_FILE = pathlib.Path(__file__).parent / "hotkeys.toml"
 MINIMUM_SIZE = (1024, 768)
+
+DOCOPT_DOC = """MouseFox.
+
+Usage: mousefox [-h | --help] [options]
+
+Options:
+  -h, --help                  Show this help and quit
+  -m, --maximize              Maximize the window automatically
+  -b, --borderless            Remove window border
+  --size <size>               Window size in pixels (e.g. `800x600`)
+  --offset <offset>           Window offset in pixels (e.g. `200x50`)
+"""
 
 
 @dataclass
@@ -50,6 +63,8 @@ class AppConfig:
     """Text to show when ready to connect remotely."""
     allow_quit: bool = True
     """Allow MouseFox to quit or restart the script."""
+    parse_args: bool = True
+    """Allow user to pass arguments to override some configurations."""
 
     def __getitem__(self, item):
         """Get item."""
@@ -67,12 +82,29 @@ class AppConfig:
         return self.__dataclass_fields__.keys()
 
 
+def _parse_config_args(app_config: AppConfig) -> AppConfig:
+    if not app_config.parse_args:
+        return app_config
+    new_config = AppConfig(**app_config)
+    args = docopt.docopt(DOCOPT_DOC)
+    if args.maximize:
+        new_config.maximize = True
+    if args.borderless:
+        new_config.borderless = True
+    if args.size:
+        new_config.size = tuple(int(_) for _ in args.size.split("x", 1))
+    if args.offset:
+        new_config.offset = tuple(int(_) for _ in args.offset.split("x", 1))
+    return new_config
+
+
 class App(kx.XApp):
     """MouseFox GUI app."""
 
     def __init__(self, app_config: AppConfig, /):
         """Initialize the app. It is recommended to run the app with `mousefox.run`."""
         super().__init__()
+        app_config = _parse_config_args(app_config)
         self._client: Optional[pgnet.Client] = None
         if app_config.borderless:
             self.toggle_borderless(True)
